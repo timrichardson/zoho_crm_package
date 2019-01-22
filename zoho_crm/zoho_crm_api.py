@@ -12,12 +12,12 @@ this file is based on Zoho's ancient python sdk. The Zoho licence is not specifi
 import json
 import logging
 import urllib.parse
-import os.path
 from pathlib import Path
 from datetime import datetime,timezone
 from typing import Optional,Tuple,Union
 import requests
 from requests.adapters import HTTPAdapter,Retry
+
 
 
 logger = logging.getLogger()
@@ -100,7 +100,7 @@ class Zoho_crm:
             return None
         elif r.status_code == 401:
             #assume invalid token
-            self.refresh_access_token()
+            self._refresh_access_token()
             #retry the request somehow
             # probably should use a 'retry' exception?
             orig_request = r.request
@@ -280,22 +280,27 @@ class Zoho_crm:
                 r = self.requests_session.get(url=url, headers=headers)
                 r = self.requests_session.post(url=url)
                 if r.status_code == 401:
-                    data_loaded = self.refresh_access_token()
+                    data_loaded = self._refresh_access_token()
 
                 return data_loaded
         except (KeyError,FileNotFoundError,IOError) as e:
-            new_token = self.refresh_access_token()
+            new_token = self._refresh_access_token()
             return new_token
 
 
-    def refresh_access_token(self)->dict:
+    def _refresh_access_token(self)->dict:
+        """ This forces a new token so it should only be called
+        after we know we need a new token.
+        Use load_access_token to get a token, it will call this if it needs to."""
         url=(f"https://accounts.zoho.com/oauth/v2/token?refresh_token="
              f"{self.refresh_token}&client_id={self.client_id}&"
              f"client_secret={self.client_secret}&grant_type=refresh_token")
         r = requests.post(url=url)
         if r.status_code == 200:
             new_token = r.json()
-            print (new_token)
+            print(f"New token: {new_token}")
+            if 'access_token' not in new_token:
+                print(f"Token does not look valid")
             self.current_token = new_token
             with self.token_file_path.open('w') as outfile:
                 json.dump(new_token, outfile)

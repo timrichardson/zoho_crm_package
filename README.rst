@@ -64,5 +64,5 @@ Copy the refresh token ... this doesn't expire, and it's how access is granted
 Testing
 =======
 
-Warning: testing writes an access token to a temporary directory provided by pytest, on linux this is in /tmp
+Warning: testing writes an access token to a temporary directory provided by pytest, on linux this is a subdirectory of /tmp
 
