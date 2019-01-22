@@ -7,8 +7,10 @@ def readme():
 # https://pypi.org/classifiers/
 setup(
         name='zoho_crm',
+        keywords='zoho crm',
         version='0.1.1',
         packages=['zoho_crm'],
+        python_requires='>=3.6',
         install_requires=['requests',
             ],
         setup_requires=["pytest-runner",],
@@ -19,7 +21,7 @@ setup(
             'Programming Language :: Python :: 3.7',
             'Topic :: Text Processing :: Linguistic',
             ],
-        url='',
+        url='https://github.com/timrichardson/zoho_crm_package',
         license='GPL v3',
         author='Tim Richardson',
         author_email='tim@growthpath.com.au',

@@ -11,9 +11,10 @@ Authenticating with Zoho CRM
 
 
 You need three things:
-refresh token
-client ID
-client secret
+
+1. refresh token
+2. client ID
+3. client secret
 
 These instructions are from the documentation from Zoho for the Python SDK
 

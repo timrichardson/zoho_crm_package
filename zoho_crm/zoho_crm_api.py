@@ -1,12 +1,27 @@
-import requests
+"""
+zoho_crm
+~~~~~~~~
+
+:copyright: (c) 2019 by GrowthPath Pty Ltd
+:licence: MIT, see LICENCE.txt for more details.
+
+this file is based on Zoho's ancient python sdk. The Zoho licence is not specified, assumed public domain
+"""
+
+
 import json
 import logging
-from datetime import datetime,timezone
-from typing import Optional,Tuple,Union
-from requests.adapters import HTTPAdapter,Retry
 import urllib.parse
 import os.path
+from pathlib import Path
+from datetime import datetime,timezone
+from typing import Optional,Tuple,Union
+import requests
+from requests.adapters import HTTPAdapter,Retry
+
+
 logger = logging.getLogger()
+
 
 def requests_retry_session(
         retries=10,
@@ -47,19 +62,28 @@ def __hook(self, res, *args, **kwargs):
 
 class Zoho_crm:
 
-    def __init__(self,refresh_token,client_id,client_secret,token_file_dir,
-                 default_zoho_user_name=None,
-                 default_zoho_user_id=None):
+    def __init__(self,refresh_token:str,client_id:str,client_secret:str,token_file_dir:Path,
+                 default_zoho_user_name:str=None,
+                 default_zoho_user_id:str=None):
+        """
+
+        :param str refresh_token:
+        :param str client_id:
+        :param str client_secret:
+        :param str token_file_dir: The access_token json file are kept in here
+        :param str default_zoho_user_name:
+        :param str default_zoho_user_id:
+        """
         token_file_name = 'access_token.json'
         self.requests_session = requests_retry_session()
         self.refresh_token = refresh_token
         self.client_id = client_id
         self.client_secret = client_secret
         self.base_url = "https://www.zohoapis.com/crm/v2/"
-        self.zoho_user_cache = None
+        self.zoho_user_cache = None #type: dict
         self.default_zoho_user_name = default_zoho_user_name
         self.default_zoho_user_id = default_zoho_user_id
-        self.token_file_path= os.path.join(token_file_dir, token_file_name)
+        self.token_file_path = token_file_dir / token_file_name
         self.current_token =self.load_access_token()
 
 
@@ -122,7 +146,11 @@ class Zoho_crm:
             page += 1
 
 
-    def get_users(self,user_type=None):
+    def get_users(self,user_type:str=None)->dict:
+        """
+        Get zoho users, filtering by a Zoho CRM user type. The default value of None is mapped to 'AllUsers'
+
+        """
         if self.zoho_user_cache is None:
             user_type = 'AllUsers' or user_type
             url = self.base_url + f"users?type={user_type}"
@@ -132,9 +160,7 @@ class Zoho_crm:
         return self.zoho_user_cache
 
 
-
-
-    def finduser_by_name(self,name):
+    def finduser_by_name(self,name:str)->Tuple[str,str]:
         users = self.get_users()
         #there will be better logic for default user, based on the location of the Dear order
         default_user_name = self.default_zoho_user_name
@@ -197,7 +223,6 @@ class Zoho_crm:
             return False, r.json()
 
 
-
     def create_zoho_quote(self,data:dict)->Tuple[bool,dict,Optional[str]]:
         """ dict is the data of a Zoho quote. The returned result is  a tuple, the last being ID of new record"""
         #creation is done with the Record API
@@ -219,7 +244,7 @@ class Zoho_crm:
             return False,r.json(),None
 
 
-    def update_zoho_quote(self,data:dict):
+    def update_zoho_quote(self,data:dict)->Tuple[bool,dict]:
         module_name = "Deals"
         url = self.base_url + f"{module_name}/{data['id']}"
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -233,7 +258,7 @@ class Zoho_crm:
             return False, r.json()
 
 
-    def delete_zoho_quote(self,quote_id):
+    def delete_zoho_quote(self,quote_id)->Tuple[bool,dict]:
         module_name = "Deals"
         url = self.base_url + f"{module_name}"
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -247,7 +272,7 @@ class Zoho_crm:
 
     def load_access_token(self)->dict:
         try:
-            with open(self.token_file_path) as data_file:
+            with self.token_file_path.open() as data_file:
                 data_loaded = json.load(data_file)
                 # validate it
                 url = self.base_url + f"users?type='AllUsers'"
@@ -258,19 +283,21 @@ class Zoho_crm:
                     data_loaded = self.refresh_access_token()
 
                 return data_loaded
-        except FileNotFoundError:
+        except (KeyError,FileNotFoundError,IOError) as e:
             new_token = self.refresh_access_token()
             return new_token
 
 
     def refresh_access_token(self)->dict:
-        url=f"https://accounts.zoho.com/oauth/v2/token?refresh_token={self.refresh_token}&client_id={self.client_id}&client_secret={self.client_secret}&grant_type=refresh_token"
+        url=(f"https://accounts.zoho.com/oauth/v2/token?refresh_token="
+             f"{self.refresh_token}&client_id={self.client_id}&"
+             f"client_secret={self.client_secret}&grant_type=refresh_token")
         r = requests.post(url=url)
         if r.status_code == 200:
             new_token = r.json()
             print (new_token)
             self.current_token = new_token
-            with open(self.token_file_path, 'w') as outfile:
+            with self.token_file_path.open('w') as outfile:
                 json.dump(new_token, outfile)
             return new_token
         else:
