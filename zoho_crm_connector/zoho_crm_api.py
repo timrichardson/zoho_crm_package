@@ -1,5 +1,5 @@
 """
-zoho_crm
+zoho_crm_connector
 ~~~~~~~~
 
 :copyright: (c) 2019 by GrowthPath Pty Ltd
@@ -45,6 +45,7 @@ def requests_retry_session(
     session.mount('https://', adapter)
     return session
 
+
 # requests hook to get new token if expiry
 def __hook(self, res, *args, **kwargs):
     if res.status_code == requests.codes.unauthorized:
@@ -61,8 +62,8 @@ def __hook(self, res, *args, **kwargs):
 
 
 class Zoho_crm:
-
     def __init__(self,refresh_token:str,client_id:str,client_secret:str,token_file_dir:Path,
+                 base_url=None,
                  default_zoho_user_name:str=None,
                  default_zoho_user_id:str=None):
         """
@@ -79,7 +80,7 @@ class Zoho_crm:
         self.refresh_token = refresh_token
         self.client_id = client_id
         self.client_secret = client_secret
-        self.base_url = "https://www.zohoapis.com/crm/v2/"
+        self.base_url = base_url or "https://www.zohoapis.com/crm/v2/"
         self.zoho_user_cache = None #type: dict
         self.default_zoho_user_name = default_zoho_user_name
         self.default_zoho_user_id = default_zoho_user_id
@@ -87,9 +88,7 @@ class Zoho_crm:
         self.current_token =self.load_access_token()
 
 
-
     def validate_response(self, r:requests.Response)->Optional[dict]:
-        #this is bad
         if r.status_code == 200:
             return r.json()
         elif r.status_code == 201:
@@ -192,7 +191,6 @@ class Zoho_crm:
         #creation is done with the Record API
         # https://www.zoho.com/crm/help/api/v2/#create-specify-records
         module_name = "Accounts"
-
         url = self.base_url + f'{module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
         if 'trigger' not in data:
@@ -200,9 +198,7 @@ class Zoho_crm:
         r = self.requests_session.post(url=url,headers=headers,json=data)
 
         if r.ok:
-            # get the accoount
             account_id = r.json()['data'][0]['details']['id']
-
             return True,self.get_record(module_name=module_name,id=account_id)
         else:
             return False,r.json()

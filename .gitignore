@@ -215,5 +215,5 @@ tags
 # Persistent undo
 [._]*.un~
 
-/zoho_crm/tests/private/
-/zoho_crm/tests/access_token.json
+/zoho_crm_connector/tests/private/
+/zoho_crm_connector/tests/access_token.json

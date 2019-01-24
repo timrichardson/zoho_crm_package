@@ -2,7 +2,7 @@
 import os
 from datetime import datetime,timezone
 import pytest
-from zoho_crm import Zoho_crm
+from zoho_crm_connector import Zoho_crm
 
 
 #this depends on django settings

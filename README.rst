@@ -1,14 +1,21 @@
 Zoho CRM Connector
-------------------
-Zoho provides a Python SDK, but it is Python 2.7 centric and had other
-problems.
+==================
 
-To use:
+Zoho provides a Python SDK, but it is Python 2.7 and I ran into some bugs.
+Also, it has a dependency on mysql as a hard-coded database layer.
+This is basically what I consider a pragmatic library for my own purposes.
+
+This package uses requests with session retry, and at present this is not configurable.
+
+
+Install
+=======
+
+pip install zoho_crm_connector
+
 
 Authenticating with Zoho CRM
-
-# notes on sandbox account: https://help.zoho.com/portal/community/topic/api-has-a-sandbox-environment
-
+============================
 
 You need three things:
 
@@ -19,7 +26,7 @@ You need three things:
 These instructions are from the documentation from Zoho for the Python SDK
 
 Step 1: Registering a Zoho Client
-=================================
+---------------------------------
 
 Since Zoho CRM APIs are authenticated with OAuth2 standards, you should register your client app with Zoho. To register your app:
 
@@ -34,7 +41,7 @@ The newly registered app's Client ID and Client Secret can be found by clicking 
 
 
 Step 2: Generating self-authorized grant and refresh token
-==========================================================
+----------------------------------------------------------
 
 For self client apps, the self authorized grant token should be generated from the Zoho Developer Console (https://accounts.zoho.com/developerconsole)
 
@@ -55,14 +62,24 @@ https://accounts.zoho.com/oauth/v2/token?code={grant_token}&redirect_uri={redire
 
 this works with curl:
 
-curl -d "code=1000.2f...68&redirect_uri=https://www.growthpath.com.au/callback&client_id=1000.ZZZZ...99&client_secret=bzz...123&grant_type=authorization_code" -X POST https://accounts.zoho.com/oauth/v2/token
+``curl -d "code=1000.2f...68&redirect_uri=https://www.growthpath.com.au/callback&client_id=1000.ZZZZ...99&client_secret=bzz...123&grant_type=authorization_code" -X POST https://accounts.zoho.com/oauth/v2/token``
 
 Copy the refresh token ... this doesn't expire, and it's how access is granted
 
+Usage
+=====
+See test_zoho_crm_connector.py in tests for some examples.
 
 
 Testing
 =======
+pytest needs to be installed.
 
-Warning: testing writes an access token to a temporary directory provided by pytest, on linux this is a subdirectory of /tmp
+Warning: testing writes an access token to a temporary directory provided by pytest, on linux this is a subdirectory of /tmp.
+testing needs a connection to zoho. Set three environment variables::
+
+      'refresh_token': os.getenv('ZOHOCRM_REFRESH_TOKEN'),
+       'client_id': os.getenv('ZOHOCRM_CLIENT_ID'),
+       'client_secret': os.getenv('ZOHOCRM_CLIENT_SECRET')
+
 

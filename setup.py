@@ -6,17 +6,17 @@ def readme():
 
 # https://pypi.org/classifiers/
 setup(
-        name='zoho_crm',
+        name='zoho_crm_connector',
         keywords='zoho crm',
         version='0.1.1',
-        packages=['zoho_crm'],
+        packages=['zoho_crm_connector'],
         python_requires='>=3.6',
         install_requires=['requests',
             ],
         setup_requires=["pytest-runner",],
         tests_require=["pytest",],
         classifiers=[
-            'Development Status :: 2 - Pre-Alpha',
+            'Development Status :: 3 - Alpha',
             'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 3.7',
             'Topic :: Text Processing :: Linguistic',
