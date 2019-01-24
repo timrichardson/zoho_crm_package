@@ -8,7 +8,7 @@ def readme():
 setup(
         name='zoho_crm_connector',
         keywords='zoho crm',
-        version='0.1.1',
+        version='0.1.2',
         packages=['zoho_crm_connector'],
         python_requires='>=3.6',
         install_requires=['requests',

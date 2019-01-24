@@ -1,11 +1,12 @@
 Zoho CRM Connector
 ==================
 
-Zoho provides a Python SDK, but it is Python 2.7 and I ran into some bugs.
-Also, it has a dependency on mysql as a hard-coded database layer.
-This is basically what I consider a pragmatic library for my own purposes.
+Zoho provides a Python SDK, but I found it a bit hard to use and it seems a bit complicated.
+For instance, there is a dependency on mysql.
+This module is a little more pragmatic (it uses retries) and it returns pages of results with yield.
 
-This package uses requests with session retry, and at present this is not configurable.
+This is basically what I consider a pragmatic library for my own purposes, so it has specific functions for doing things like creating quotes.
+This code is based on code I have in production, where it is used to synchronise accounts, contacts and quotes with an ERP.
 
 
 Install
