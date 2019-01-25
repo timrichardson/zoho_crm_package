@@ -19,6 +19,7 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
     zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
                         client_id=zoho_keys['client_id'],
                         client_secret=zoho_keys['client_secret'],
+                        base_url='https://crmsandbox.zoho.com/crm/v2/',
                         token_file_dir=tmp_path_factory.mktemp('zohocrm'))
     return zoho_crm
 
