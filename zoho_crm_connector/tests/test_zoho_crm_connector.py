@@ -40,14 +40,14 @@ def test_get_users(zoho_crm):
 #@pytest.mark.skip
 def test_get_contacts_simple_search(zoho_crm):
     contacts = []
-    for data_block in zoho_crm.yield_page_from_module(module_name='Contacts', criteria='(Full_Name:equals:Mark Purdy)'):
+    for data_block in zoho_crm.yield_page_from_module(module_name='Contacts', criteria='(Full_Name:equals:Tim Richardson)'):
         contacts += data_block
     assert len(contacts)>0,"Fail, no contacts"
 
 #@pytest.mark.skip
 def test_get_accounts_simple_search(zoho_crm):
     contacts = []
-    for data_block in zoho_crm.yield_page_from_module(module_name='Accounts', criteria='(Account_Name:equals:Damien Bryant Building)'):
+    for data_block in zoho_crm.yield_page_from_module(module_name='Accounts', criteria='(Account_Name:equals:GrowthPath Pty Ltd)'):
         contacts += data_block
     assert len(contacts)>0,"Fail, no contacts"
 

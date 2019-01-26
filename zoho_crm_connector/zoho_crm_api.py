@@ -5,7 +5,15 @@ zoho_crm_connector
 :copyright: (c) 2019 by GrowthPath Pty Ltd
 :licence: MIT, see LICENCE.txt for more details.
 
-this file is based on Zoho's ancient python sdk. The Zoho licence is not specified, assumed public domain
+This library is based on Zoho's python sdk but is simplified, more pragmatic and modernised.
+
+No database dependency is included. Short-lived access tokens are written to a text file with no alternative at present.
+
+Multi-page requests are returned with yield (so they are generators).
+
+pytest tests are included. You will need to provide authentication details; the tests assume these are in environment variables.
+
+The Zoho licence is not specified at the time I referred to it, so I assumed public domain
 """
 
 
@@ -13,8 +21,8 @@ import json
 import logging
 import urllib.parse
 from pathlib import Path
-from datetime import datetime,timezone
-from typing import Optional,Tuple,Union
+from datetime import datetime
+from typing import Optional,Tuple
 import requests
 from requests.adapters import HTTPAdapter,Retry
 
@@ -23,7 +31,7 @@ from requests.adapters import HTTPAdapter,Retry
 logger = logging.getLogger()
 
 
-def requests_retry_session(
+def _requests_retry_session(
         retries=10,
         backoff_factor=2,
         status_forcelist=(500, 502, 503, 504,429),
@@ -62,21 +70,25 @@ def __hook(self, res, *args, **kwargs):
 
 
 class Zoho_crm:
+    """ An authenticated connection to zoho crm.
+
+    Initialise a Zoho CRM connection by providing authentication details including a refresh token.
+
+    Access tokens are obtained when needed.
+
+    The base_url defaults to the live API for US usage;
+        another base_url can be provided (for the sandbox API, for instance)"""
+
     def __init__(self,refresh_token:str,client_id:str,client_secret:str,token_file_dir:Path,
                  base_url=None,
                  default_zoho_user_name:str=None,
                  default_zoho_user_id:str=None):
-        """
-
-        :param str refresh_token:
-        :param str client_id:
-        :param str client_secret:
-        :param str token_file_dir: The access_token json file are kept in here
-        :param str default_zoho_user_name:
-        :param str default_zoho_user_id:
+        """ Initialise a Zoho CRM connection by providing authentication details including a refresh token.
+        Access tokens are obtained when needed. The base_url defaults to the live API for US usage;
+        another base_url can be provided (for the sandbox API, for instance)
         """
         token_file_name = 'access_token.json'
-        self.requests_session = requests_retry_session()
+        self.requests_session = _requests_retry_session()
         self.refresh_token = refresh_token
         self.client_id = client_id
         self.client_secret = client_secret
@@ -85,10 +97,14 @@ class Zoho_crm:
         self.default_zoho_user_name = default_zoho_user_name
         self.default_zoho_user_id = default_zoho_user_id
         self.token_file_path = token_file_dir / token_file_name
-        self.current_token =self.load_access_token()
+        self.current_token =self._load_access_token()
 
 
-    def validate_response(self, r:requests.Response)->Optional[dict]:
+    def _validate_response(self, r:requests.Response)->Optional[dict]:
+        """ Called internally to deal with Zoho API responses. Will fetch a new access token if necessary.
+        Not all errors are explicity handled; errors not handled here have no recovery option anyway,
+        so an exception is raised."""
+        # https://www.zoho.com/crm/help/api/v2/#HTTP-Status-Codes
         if r.status_code == 200:
             return r.json()
         elif r.status_code == 201:
@@ -96,6 +112,8 @@ class Zoho_crm:
         elif r.status_code == 202: #multiple insert succeeded
             return {'result':True}
         elif r.status_code == 204: #co content
+            return None
+        elif r.status_code == 304:  # nothing changed since the requested modified-since timestamp
             return None
         elif r.status_code == 401:
             #assume invalid token
@@ -112,8 +130,10 @@ class Zoho_crm:
 
 
     def yield_page_from_module(self, module_name:str, criteria:str=None, parameters:dict=None,modified_since:datetime=None)->Optional[dict]:
-        """ the API is different for module queries and User queries.
-        for search documentation: https://www.zoho.com/crm/help/api-diff/searchRecords.html"""
+        """ Yields a page of results. Usually called for you by a helper member function, such as get_users
+        the API is different for module queries and User queries.
+
+        For use of the criteria parameter, please see search documentation: https://www.zoho.com/crm/help/api-diff/searchRecords.html"""
         page = 1
         if not criteria:
             url = self.base_url + module_name
@@ -130,7 +150,7 @@ class Zoho_crm:
             parameters['page'] = page
             r = self.requests_session.get(url=url, headers=headers, params=urllib.parse.urlencode(parameters))
 
-            r_json = self.validate_response(r)
+            r_json = self._validate_response(r)
             if not r_json:
                 return None
             if 'data' in r_json:
@@ -148,32 +168,33 @@ class Zoho_crm:
     def get_users(self,user_type:str=None)->dict:
         """
         Get zoho users, filtering by a Zoho CRM user type. The default value of None is mapped to 'AllUsers'
-
         """
         if self.zoho_user_cache is None:
             user_type = 'AllUsers' or user_type
             url = self.base_url + f"users?type={user_type}"
             headers={'Authorization':'Zoho-oauthtoken ' + self.current_token['access_token']}
             r = self.requests_session.get(url=url,headers=headers)
-            self.zoho_user_cache =  self.validate_response(r)
+            self.zoho_user_cache =  self._validate_response(r)
         return self.zoho_user_cache
 
 
-    def finduser_by_name(self,name:str)->Tuple[str,str]:
+    def finduser_by_name(self, full_name:str)->Tuple[str, str]:
+        """ Tries to reutn the user as a tuple(full_name,Zoho user id), using the full full_name provided.
+            The user must be active. If no such user is found, return the default user provided
+            at initialisation of the Zoho_crm object."""
         users = self.get_users()
-        #there will be better logic for default user, based on the location of the Dear order
         default_user_name = self.default_zoho_user_name
         default_user_id = self.default_zoho_user_id
         for user in users['users']:
-            if user['full_name'] == name.strip():
+            if user['full_name'] == full_name.strip():
                 if user['status'] == 'active':
-                    return name,user['id']
+                    return full_name, user['id']
                 else:
-                    print(f"User is inactive in zoho crm: {name}")
+                    logger.debug(f"User is inactive in zoho crm: {full_name}")
                     return default_user_name, default_user_id
 
         #not found
-        logger.info(f"User not found in zoho: {name}")
+        logger.info(f"User not found in zoho: {full_name}")
         return default_user_name,default_user_id
 
 
@@ -183,13 +204,16 @@ class Zoho_crm:
         url = self.base_url + f'{module_name}/{id}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
         r = self.requests_session.get(url=url, headers=headers)
-        r_json = self.validate_response(r)
+        r_json = self._validate_response(r)
         return r_json['data'][0]
 
 
     def create_zoho_account(self,data:dict)->Tuple[bool,dict]:
-        #creation is done with the Record API
-        # https://www.zoho.com/crm/help/api/v2/#create-specify-records
+        """creation is done with the Record API and module "Accounts".
+        Returns a tuple with a success boolean, and the entire record if successful.
+        If unsuccessful, it returns the json data in the API reply.
+        See https://www.zoho.com/crm/help/api/v2/#create-specify-records
+        """
         module_name = "Accounts"
         url = self.base_url + f'{module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -204,6 +228,11 @@ class Zoho_crm:
             return False,r.json()
 
     def create_zoho_contact(self,data:dict)->Tuple[bool,dict]:
+        """creation is done with the Record API and module "Contacts".
+        Returns a tuple with a success boolean, and the entire record if successful.
+        If unsuccessful, it returns the json data in the API reply.
+        See https://www.zoho.com/crm/help/api/v2/#create-specify-records
+               """
         module_name = "Contacts"
         url = self.base_url + f'{module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -220,9 +249,11 @@ class Zoho_crm:
 
 
     def create_zoho_quote(self,data:dict)->Tuple[bool,dict,Optional[str]]:
-        """ dict is the data of a Zoho quote. The returned result is  a tuple, the last being ID of new record"""
-        #creation is done with the Record API
+        """ Creates a Deal (aka potential).
+        The returned result is  a tuple, the last being ID of new record.
+        creation is done with the Record API, module is Deals.
         # https://www.zoho.com/crm/help/api/v2/#create-specify-records
+        """
         module_name = "Deals"
         url = self.base_url + f'{module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -241,6 +272,8 @@ class Zoho_crm:
 
 
     def update_zoho_quote(self,data:dict)->Tuple[bool,dict]:
+        """ updates an existing Dear with the data in the dict. Returns success boolean
+        and the json results of the API put"""
         module_name = "Deals"
         url = self.base_url + f"{module_name}/{data['id']}"
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -255,6 +288,7 @@ class Zoho_crm:
 
 
     def delete_zoho_quote(self,quote_id)->Tuple[bool,dict]:
+        """ deletes a deal based on the Zoho id matching quote_id"""
         module_name = "Deals"
         url = self.base_url + f"{module_name}"
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -266,7 +300,7 @@ class Zoho_crm:
             return False, r.json()
 
 
-    def load_access_token(self)->dict:
+    def _load_access_token(self)->dict:
         try:
             with self.token_file_path.open() as data_file:
                 data_loaded = json.load(data_file)
@@ -294,9 +328,9 @@ class Zoho_crm:
         r = requests.post(url=url)
         if r.status_code == 200:
             new_token = r.json()
-            print(f"New token: {new_token}")
+            logger.info(f"New token: {new_token}")
             if 'access_token' not in new_token:
-                print(f"Token does not look valid")
+                logger.info(f"Token does not look valid")
             self.current_token = new_token
             with self.token_file_path.open('w') as outfile:
                 json.dump(new_token, outfile)
