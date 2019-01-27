@@ -1,6 +1,6 @@
 """
 zoho_crm_connector
-~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 :copyright: (c) 2019 by GrowthPath Pty Ltd
 :licence: MIT, see LICENCE.txt for more details.
@@ -14,6 +14,9 @@ Multi-page requests are returned with yield (so they are generators).
 pytest tests are included. You will need to provide authentication details; the tests assume these are in environment variables.
 
 The Zoho licence is not specified at the time I referred to it, so I assumed public domain
+
+
+Handy notes:
 """
 
 
@@ -22,10 +25,9 @@ import logging
 import urllib.parse
 from pathlib import Path
 from datetime import datetime
-from typing import Optional,Tuple
+from typing import Optional,Tuple,List,Dict,Generator
 import requests
 from requests.adapters import HTTPAdapter,Retry
-
 
 
 logger = logging.getLogger()
@@ -129,11 +131,16 @@ class Zoho_crm:
             raise RuntimeError(f"API failure trying: {r.reason} and status code: {r.status_code} and text {r.text}, attempted url was: {r.url}, unquoted is: {urllib.parse.unquote(r.url)}")
 
 
-    def yield_page_from_module(self, module_name:str, criteria:str=None, parameters:dict=None,modified_since:datetime=None)->Optional[dict]:
+    def yield_page_from_module(self, module_name:str, criteria:str=None,
+                        parameters:dict=None,modified_since:datetime=None)->Generator[List[dict],None,None]:
         """ Yields a page of results. Usually called for you by a helper member function, such as get_users
         the API is different for module queries and User queries.
 
-        For use of the criteria parameter, please see search documentation: https://www.zoho.com/crm/help/api-diff/searchRecords.html"""
+        For use of the criteria parameter, please see search documentation: https://www.zoho.com/crm/help/api-diff/searchRecords.html
+        'Performs search by the following shown criteria.
+        (({apiname}:{starts_with|equals}:{value}) and ({apiname}:{starts_with|equals}:{value}))
+        You can search a maximum of 10 criteria (with same or different columns) with equals and starts_with conditions as shown above.'
+        """
         page = 1
         if not criteria:
             url = self.base_url + module_name
@@ -198,7 +205,7 @@ class Zoho_crm:
         return default_user_name,default_user_id
 
 
-    def get_record(self,module_name,id)->dict:
+    def get_record_by_id(self, module_name, id)->dict:
         """ Call the get record endpoint with an id"""
 
         url = self.base_url + f'{module_name}/{id}'
@@ -208,96 +215,76 @@ class Zoho_crm:
         return r_json['data'][0]
 
 
-    def create_zoho_account(self,data:dict)->Tuple[bool,dict]:
-        """creation is done with the Record API and module "Accounts".
-        Returns a tuple with a success boolean, and the entire record if successful.
-        If unsuccessful, it returns the json data in the API reply.
-        See https://www.zoho.com/crm/help/api/v2/#create-specify-records
-        """
-        module_name = "Accounts"
-        url = self.base_url + f'{module_name}'
-        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
-        if 'trigger' not in data:
-            data['trigger'] = []
-        r = self.requests_session.post(url=url,headers=headers,json=data)
+    def delete_from_module(self, module_name: str, record_id: str) -> Tuple[bool, dict]:
+        """ deletes from a named Zoho CRM module"""
 
-        if r.ok:
-            account_id = r.json()['data'][0]['details']['id']
-            return True,self.get_record(module_name=module_name,id=account_id)
-        else:
-            return False,r.json()
-
-    def create_zoho_contact(self,data:dict)->Tuple[bool,dict]:
-        """creation is done with the Record API and module "Contacts".
-        Returns a tuple with a success boolean, and the entire record if successful.
-        If unsuccessful, it returns the json data in the API reply.
-        See https://www.zoho.com/crm/help/api/v2/#create-specify-records
-               """
-        module_name = "Contacts"
-        url = self.base_url + f'{module_name}'
-        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
-        if 'trigger' not in data:
-            data['trigger'] = []
-
-        r = self.requests_session.post(url=url, headers=headers, json=data)
-
-        if r.ok and r.status_code in (200,201):
-            contact_id = r.json()['data'][0]['details']['id']
-            return True, self.get_record(module_name=module_name, id=contact_id)
-        else:
-            return False, r.json()
-
-
-    def create_zoho_quote(self,data:dict)->Tuple[bool,dict,Optional[str]]:
-        """ Creates a Deal (aka potential).
-        The returned result is  a tuple, the last being ID of new record.
-        creation is done with the Record API, module is Deals.
-        # https://www.zoho.com/crm/help/api/v2/#create-specify-records
-        """
-        module_name = "Deals"
-        url = self.base_url + f'{module_name}'
-        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
-        if 'trigger' not in data:
-            data['trigger'] = []
-        r = self.requests_session.post(url=url,headers=headers,json={'data':[data]})
-        if r.ok:
-            json_result = r.json()
-            try:
-                details = json_result['data'][0]['details']['id']
-            except KeyError:
-                raise
-            return True,json_result,json_result['data'][0]['details']['id']
-        else:
-            return False,r.json(),None
-
-
-    def update_zoho_quote(self,data:dict)->Tuple[bool,dict]:
-        """ updates an existing Dear with the data in the dict. Returns success boolean
-        and the json results of the API put"""
-        module_name = "Deals"
-        url = self.base_url + f"{module_name}/{data['id']}"
-        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
-        if 'trigger' not in data:
-            data['trigger'] = []
-        r = self.requests_session.put(url=url, headers=headers, json={'data':[data]})
-
-        if r.ok and r.status_code == 200:
-            return True, r.json()
-        else:
-            return False, r.json()
-
-
-    def delete_zoho_quote(self,quote_id)->Tuple[bool,dict]:
-        """ deletes a deal based on the Zoho id matching quote_id"""
-        module_name = "Deals"
         url = self.base_url + f"{module_name}"
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
-        r = self.requests_session.delete(url=url, headers=headers, params={'ids': quote_id})
+        r = self.requests_session.delete(url=url, headers=headers, params={'ids': record_id})
 
         if r.ok and r.status_code == 200:
             return True, r.json()
         else:
             return False, r.json()
+
+
+    def upsert_zoho_module(self, module_name:str, payload: Dict[str, List[Dict]],
+                           criteria: str = None,) -> Tuple[bool, Dict]:
+        """creation is done with the Record API and module "Accounts".
+        Zoho does not make mandatory fields such as Account_Name unique.
+        But here, a criteria string can be passed to identify a 'unique' record:
+        we will update the first record we find, and insert a new record without question if
+        there is no match (critera is None reverts to standard Zoho behaviour: it will always insert)
+
+        For notes on criteria string see yield_page_from_module()
+
+        Note: payload looks like this: payload={'data': [zoho_account]} where zoho_account is a dictionary
+        for one account.
+
+        Returns a tuple with a success boolean, and the entire record if successful.
+        The Zoho API distinguishes between the record was already there and updated,
+        or it was not there and it was inserted: here, both are True.
+
+        If unsuccessful, it returns the json result in the API reply.
+        See https://www.zoho.com/crm/help/api/v2/#create-specify-records
+        """
+        update_existing_record = False   #by default, always insert
+        if criteria:
+            matches = []
+            for data_block in self.yield_page_from_module(module_name=module_name,
+                               criteria=criteria):
+                matches += data_block
+
+            if len(matches) > 0:
+                payload['data'][0]['id'] = matches[0]['id']  # and need to do a put
+                update_existing_record = True
+
+        url = self.base_url + f'{module_name}'
+        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+        if 'trigger' not in payload:
+            payload['trigger'] = []
+        if update_existing_record:
+            r = self.requests_session.put(url=url, headers=headers, json=payload)
+        else:
+            r = self.requests_session.post(url=url, headers=headers, json=payload)
+        if r.ok:
+            record_id = r.json()['data'][0]['details']['id']
+            return True, self.get_record_by_id(module_name=module_name, id=record_id)
+        else:
+            return False, r.json()
+
+
+    def get_related_records(self,parent_module_name:str,child_module_name:str,parent_id:str) \
+            -> Tuple[bool, List[Dict]]:
+        url = self.base_url + f'{parent_module_name}/{parent_id}/{child_module_name}'
+        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+        r = self.requests_session.get(url=url, headers=headers)
+
+        r_json = self._validate_response(r)
+        if r.ok:
+            return True,r_json['data']
+        else:
+            return False,  r_json()
 
 
     def _load_access_token(self)->dict:
@@ -337,10 +324,3 @@ class Zoho_crm:
             return new_token
         else:
             raise RuntimeError(f"API failure trying to get access token: {r.reason}")
-
-
-
-
-
-
-
