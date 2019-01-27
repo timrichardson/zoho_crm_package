@@ -17,6 +17,11 @@ The Zoho licence is not specified at the time I referred to it, so I assumed pub
 
 
 Handy notes:
+
+Search criteria does not work across modules (where the json returns is a {name,id} object)
+You will need to enumerate a super-set of candidate results and search, or use related_records (see test case)
+but you will still need to enumerate. This is too complicated to put in the API.
+
 """
 
 

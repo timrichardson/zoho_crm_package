@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
 
 project = 'zoho_crm_connector'
-copyright = '2019, Tim Richardson, GrowthPath P/L'
-author = 'Tim Richardson, GrowthPath P/L'
+copyright = '2019, Tim Richardson'
+author = 'Tim Richardson'
 
 # The short X.Y version
 version = ''
@@ -38,6 +38,7 @@ release = ''
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
@@ -46,7 +47,6 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon'
 ]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -69,7 +69,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -135,7 +135,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'zoho_crm_connector.tex', 'zoho\\_crm\\_connector Documentation',
-     'Tim Richardson, GrowthPath P/L', 'manual'),
+     'Tim Richardson', 'manual'),
 ]
 
 
