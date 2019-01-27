@@ -1,14 +1,21 @@
 from setuptools import setup
+from sphinx.setup_command import BuildDoc
+cmdclass = {'build_sphinx': BuildDoc}
 
 def readme():
     with open('README.rst') as f:
         return f.read()
 
 # https://pypi.org/classifiers/
+
+name='zoho_crm_connector'
+keywords='zoho crm'
+version='0.2.0'
+
 setup(
-        name='zoho_crm_connector',
-        keywords='zoho crm',
-        version='0.1.3',
+        name=name,
+        keywords=keywords,
+        version=version,
         packages=['zoho_crm_connector'],
         python_requires='>=3.6',
         install_requires=['requests',
@@ -26,5 +33,14 @@ setup(
         author='Tim Richardson',
         author_email='tim@growthpath.com.au',
         description='Zoho CRM connector',
-        long_description=readme()
+        long_description=readme(),
+     cmdclass=cmdclass,
+        # these are optional and override conf.py settings
+        command_options={
+            'build_sphinx': {
+                'project': ('setup.py', name),
+                'version': ('setup.py', version),
+                'release': ('setup.py', version),
+                'source_dir': ('setup.py', 'docs')}},
+
         )
