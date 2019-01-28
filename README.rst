@@ -82,7 +82,12 @@ Usage
 =====
 See test_zoho_crm_connector.py in tests for some examples.
 
-[More documentation](docs/_build/html/index.html)
+
+`Documentation <docs/_build/html/index.html>`_.
+
+.. _docs/_build/html/index.html:
+
+
 
 
 Testing
