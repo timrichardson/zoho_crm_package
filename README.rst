@@ -3,10 +3,8 @@ Zoho CRM Connector
 
 Zoho provides a Python SDK, but I found it a bit hard to use and it seems a bit complicated.
 For instance, there is a dependency on mysql.
-This module is a little more pragmatic (it uses retries) and it returns pages of results with yield.
+This module is a little more pragmatic and it returns pages of results with yield.
 
-This is basically what I consider a pragmatic library for my own purposes, so it has specific functions for doing things like creating quotes.
-This code is based on code I have in production, where it is used to synchronise accounts, contacts and quotes with an ERP.
 
 
 Install
@@ -84,15 +82,20 @@ Usage
 =====
 See test_zoho_crm_connector.py in tests for some examples.
 
+[More documentation](docs/_build/html/index.html)
+
 
 Testing
 =======
 pytest needs to be installed.
 
 Warning: testing writes an access token to a temporary directory provided by pytest, on linux this is a subdirectory of /tmp.
-testing needs a connection to zoho. Set three environment variables::
+testing needs a connection to zoho. Set three environment variables, because this is what the tests look for::
 
     refresh_token': os.getenv('ZOHOCRM_REFRESH_TOKEN'),
     client_id': os.getenv('ZOHOCRM_CLIENT_ID'),
     client_secret': os.getenv('ZOHOCRM_CLIENT_SECRET')
+
+    and also set a Zoho user id as the default user (ZOHOCRM_DEFAULT_USERID). This is an internal Zoho id value, not a user name.
+
 
