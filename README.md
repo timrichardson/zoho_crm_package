@@ -83,10 +83,6 @@ Usage
 See test_zoho_crm_connector.py in tests for some examples.
 
 
-`Documentation <docs/build/html/index.html>`_.
-
-.. _docs/build/html/index.html:
-
 
 
 
