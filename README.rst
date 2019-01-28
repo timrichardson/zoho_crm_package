@@ -85,7 +85,7 @@ See test_zoho_crm_connector.py in tests for some examples.
 
 `Documentation <docs/_build/html/index.html>`_.
 
-.. _docs/_build/html/index.html:
+.. _docs/build/html/index.html:
 
 
 
