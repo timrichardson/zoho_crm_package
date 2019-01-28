@@ -2,10 +2,6 @@ from setuptools import setup
 from sphinx.setup_command import BuildDoc
 cmdclass = {'build_sphinx': BuildDoc}
 
-def readme():
-    with open('README.md') as f:
-        return f.read()
-
 # https://pypi.org/classifiers/
 
 name='zoho_crm_connector'
@@ -33,8 +29,7 @@ setup(
         author='Tim Richardson',
         author_email='tim@growthpath.com.au',
         description='Zoho CRM connector',
-        long_description=readme(),
-     cmdclass=cmdclass,
+        cmdclass=cmdclass,
         # these are optional and override conf.py settings
         command_options={
             'build_sphinx': {
