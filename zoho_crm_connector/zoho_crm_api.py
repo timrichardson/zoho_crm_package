@@ -279,17 +279,21 @@ class Zoho_crm:
             return False, r.json()
 
 
-    def get_related_records(self,parent_module_name:str,child_module_name:str,parent_id:str) \
-            -> Tuple[bool, List[Dict]]:
+    def get_related_records(self,parent_module_name:str,child_module_name:str,parent_id:str,modified_since:datetime=None) \
+            -> Tuple[bool, Optional[List[Dict]]]:
         url = self.base_url + f'{parent_module_name}/{parent_id}/{child_module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+        if modified_since:
+            headers['If-Modified-Since'] = modified_since.isoformat()
         r = self.requests_session.get(url=url, headers=headers)
 
         r_json = self._validate_response(r)
-        if r.ok:
-            return True,r_json['data']
+        if r.ok and r_json is not None:
+            return True, r_json['data']
+        elif r.ok:
+            return True, r_json
         else:
-            return False,  r_json()
+            return False, r_json
 
 
     def _load_access_token(self)->dict:
