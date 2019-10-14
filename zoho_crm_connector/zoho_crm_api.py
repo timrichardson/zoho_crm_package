@@ -219,16 +219,16 @@ class Zoho_crm:
         r_json = self._validate_response(r)
         return r_json['data'][0]
 
-    def yield_deleted_records_from_module(self, module_name:str, type:str='All',
+    def yield_deleted_records_from_module(self, module_name:str, type:str='all',
         modified_since:datetime=None)->Generator[List[dict],None,None]:
         """ Yields a page of deleted record results.
 
         Args:
             module_name (str): The module API name.
             type (str): Filter deleted records by the following types:
-                'All': To get the list of all deleted records.
-                'Recycle': To get the list of deleted records from recycle bin.
-                'Permanent': To get the list of permanently deleted records.
+                'all': To get the list of all deleted records.
+                'recycle': To get the list of deleted records from recycle bin.
+                'permanent': To get the list of permanently deleted records.
             modified_since (datetime.datetime): Return records deleted after this date.
         Returns:
             A generator that yields pages of deleted records as a list of dictionaries.
