@@ -271,6 +271,25 @@ class Zoho_crm:
         else:
             return False, r.json()
 
+    def update_zoho_module(self, module_name: str,
+                           payload: Dict[str, List[Dict]]
+                           ) -> Tuple[bool, Dict]:
+        """Update, modified from upsert
+        """
+        url = self.base_url + module_name
+        headers = {
+            'Authorization':
+            'Zoho-oauthtoken ' + self.current_token['access_token']
+        }
+        if 'trigger' not in payload:
+            payload['trigger'] = []
+        r = self.requests_session.put(url=url,
+                                          headers=headers,
+                                          json=payload)
+        if r.ok:
+            return True, r.json()
+        else:
+            return False, r.json()
 
     def upsert_zoho_module(self, module_name:str, payload: Dict[str, List[Dict]],
                            criteria: str = None,) -> Tuple[bool, Dict]:
