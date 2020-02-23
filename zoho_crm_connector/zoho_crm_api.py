@@ -28,12 +28,12 @@ but you will still need to enumerate. This is too complicated to put in the API.
 import json
 import logging
 import urllib.parse
-from pathlib import Path
 from datetime import datetime
-from typing import Optional,Tuple,List,Dict,Generator
-import requests
-from requests.adapters import HTTPAdapter,Retry
+from pathlib import Path
+from typing import Optional, Tuple, List, Dict, Generator
 
+import requests
+from requests.adapters import HTTPAdapter, Retry
 
 logger = logging.getLogger()
 
@@ -74,6 +74,18 @@ def __hook(self, res, *args, **kwargs):
         return self.__session.send(res.request)
 
 
+def escape_zoho_characters_v2(input_string) -> str:
+    """ Note: this is only needed for searching, as in the yield_from_page method.
+    This is an example
+    :param input_string:
+    :return:
+    """
+    if r'\(' in input_string or r'\)' in input_string: #don't repeatedly escape
+        return input_string
+    else:
+        table = str.maketrans({'(':r'\(',
+                               ')':r'\)'})
+        return input_string.translate(table)
 
 
 class Zoho_crm:
@@ -138,12 +150,17 @@ class Zoho_crm:
 
     def yield_page_from_module(self, module_name:str, criteria:str=None,
                         parameters:dict=None,modified_since:datetime=None)->Generator[List[dict],None,None]:
-        """ Yields a page of results. Usually called for you by a helper member function, such as get_users
-        the API is different for module queries and User queries.
+        """ Yields a page of results, each page being a list of dicts.
 
         For use of the criteria parameter, please see search documentation: https://www.zoho.com/crm/help/api-diff/searchRecords.html
-        'Performs search by the following shown criteria.
+        Parentheses must be escaped with a backspace.
+
+        A conversion function could be:
+
+
+        Performs search by the following shown criteria.
         (({apiname}:{starts_with|equals}:{value}) and ({apiname}:{starts_with|equals}:{value}))
+
         You can search a maximum of 10 criteria (with same or different columns) with equals and starts_with conditions as shown above.'
         """
         page = 1
@@ -233,8 +250,8 @@ class Zoho_crm:
             return False, r.json()
 
 
-    def upsert_zoho_module(self, module_name:str, payload: Dict[str, List[Dict]],
-                           criteria: str = None,) -> Tuple[bool, Dict]:
+    def upsert_zoho_module(self, module_name:str, payload: Dict[str, List[Dict[str,str]]],
+                           criteria: str = None,) -> Tuple[bool, Dict[str,str]]:
         """creation is done with the Record API and module "Accounts".
         Zoho does not make mandatory fields such as Account_Name unique.
         But here, a criteria string can be passed to identify a 'unique' record:
@@ -244,7 +261,7 @@ class Zoho_crm:
         For notes on criteria string see yield_page_from_module()
 
         Note: payload looks like this: payload={'data': [zoho_account]} where zoho_account is a dictionary
-        for one account.
+        for one record. .
 
         Returns a tuple with a success boolean, and the entire record if successful.
         The Zoho API distinguishes between the record was already there and updated,
@@ -253,8 +270,11 @@ class Zoho_crm:
         If unsuccessful, it returns the json result in the API reply.
         See https://www.zoho.com/crm/help/api/v2/#create-specify-records
         """
+
         update_existing_record = False   #by default, always insert
         if criteria:
+            if len(payload['data']) != 1:
+                raise RuntimeError("Only pass one record when using criteria")
             matches = []
             for data_block in self.yield_page_from_module(module_name=module_name,
                                criteria=criteria):

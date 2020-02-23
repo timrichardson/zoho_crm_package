@@ -81,6 +81,7 @@ Copy the refresh token ... this doesn't expire, and it's how access is granted
 Usage
 =====
 See test_zoho_crm_connector.py in tests for some examples.
+Note the when searching, parentheses must be escaped. See the code.
 
 [Documentation](docs/build/html/index.html)
 
@@ -101,3 +102,7 @@ testing needs a connection to zoho. Set three environment variables, because thi
     and also set a Zoho user id as the default user (ZOHOCRM_DEFAULT_USERID). This is an internal Zoho id value, not a user name.
 
 
+Uploading
+=========
+python3 setup.^C sdist bdist_wheel
+ python3 -m twine upload --skip-existing dist/*
