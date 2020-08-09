@@ -320,7 +320,6 @@ class Zoho_crm:
                 url = self.base_url + f"users?type='AllUsers'"
                 headers = {'Authorization': 'Zoho-oauthtoken ' + data_loaded['access_token']}
                 r = self.requests_session.get(url=url, headers=headers)
-                r = self.requests_session.post(url=url)
                 if r.status_code == 401:
                     data_loaded = self._refresh_access_token()
 
