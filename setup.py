@@ -1,9 +1,13 @@
 from os import path
-
 from setuptools import setup
-from sphinx.setup_command import BuildDoc
 
-cmdclass = {'build_sphinx': BuildDoc}
+cmdclass = {}
+
+try:
+    from sphinx.setup_command import BuildDoc
+    cmdclass['build_sphinx'] = BuildDoc
+except ImportError:
+    print('WARNING: sphinx not available, not building docs')
 
 # https://pypi.org/classifiers/
 
