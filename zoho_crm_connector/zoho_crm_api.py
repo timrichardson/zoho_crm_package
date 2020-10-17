@@ -333,10 +333,13 @@ class Zoho_crm:
         """ This forces a new token so it should only be called
         after we know we need a new token.
         Use load_access_token to get a token, it will call this if it needs to."""
-        url=(f"https://accounts.zoho.com/oauth/v2/token?refresh_token="
-             f"{self.refresh_token}&client_id={self.client_id}&"
-             f"client_secret={self.client_secret}&grant_type=refresh_token")
-        r = requests.post(url=url)
+        payload = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'refresh_token': self.refresh_token,
+            'grant_type': 'refresh_token'
+        }
+        r = requests.post('https://accounts.zoho.com/oauth/v2/token', data=payload)
         if r.status_code == 200:
             new_token = r.json()
             logger.info(f"New token: {new_token}")
