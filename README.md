@@ -4,7 +4,7 @@ Zoho CRM Connector
 Zoho provides a Python SDK, but I found it a bit hard to use and it seems a bit complicated.
 For instance, there is a dependency on mysql.
 This module is a little more pragmatic and it returns pages of results with yield.
-
+This code is in regular use for some years, as of 2021. I haven't updated this because it works, but the code is not very nice and I would be embarassed to call it V1. So it is stuck in limbo: it is ok, but not heavenly.
 
 
 Install
