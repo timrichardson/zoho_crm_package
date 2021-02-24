@@ -24,7 +24,6 @@ but you will still need to enumerate. This is too complicated to put in the API.
 
 """
 
-
 import json
 import logging
 import urllib.parse
@@ -41,9 +40,9 @@ logger = logging.getLogger()
 def _requests_retry_session(
         retries=10,
         backoff_factor=2,
-        status_forcelist=(500, 502, 503, 504,429),
+        status_forcelist=(500, 502, 503, 504, 429),
         session=None,
-        ) -> requests.Session:
+) -> requests.Session:
     session = session or requests.Session()
     """  A set of integer HTTP status codes that we should force a retry on.
         A retry is initiated if the request method is in ``method_whitelist``
@@ -54,7 +53,7 @@ def _requests_retry_session(
             connect=retries,
             backoff_factor=backoff_factor,
             status_forcelist=status_forcelist,
-            )
+    )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
@@ -65,11 +64,11 @@ def _requests_retry_session(
 def __hook(self, res, *args, **kwargs):
     if res.status_code == requests.codes.unauthorized:
         logger.info('Token expired, refreshing')
-        self.auth() # sets the token on self.__session
+        self.auth()  # sets the token on self.__session
 
         req = res.request
         logger.info('Resending request', req.method, req.url, req.headers)
-        req.headers['Authorization'] = self.__session.headers['Authorization'] # why is it needed?
+        req.headers['Authorization'] = self.__session.headers['Authorization']  # why is it needed?
 
         return self.__session.send(res.request)
 
@@ -80,11 +79,11 @@ def escape_zoho_characters_v2(input_string) -> str:
     :param input_string:
     :return:
     """
-    if r'\(' in input_string or r'\)' in input_string: #don't repeatedly escape
+    if r'\(' in input_string or r'\)' in input_string:  # don't repeatedly escape
         return input_string
     else:
-        table = str.maketrans({'(':r'\(',
-                               ')':r'\)'})
+        table = str.maketrans({'(': r'\(',
+                               ')': r'\)'})
         return input_string.translate(table)
 
 
@@ -98,11 +97,18 @@ class Zoho_crm:
     The base_url defaults to the live API for US usage;
         another base_url can be provided (for the sandbox API, for instance)"""
 
-    def __init__(self,refresh_token:str,client_id:str,client_secret:str,token_file_dir:Path,
+    ACCOUNTS_HOST = {".COM": "accounts.zoho.com",
+                     ".AU": "accounts.zoho.com.au",
+                     ".EU": "accounts.zoho.eu",
+                     ".IN": "accounts.zoho.in",
+                     ".CN": "accounts.zoho.com.cn"
+                     }
+
+    def __init__(self, refresh_token: str, client_id: str, client_secret: str, token_file_dir: Path,
                  base_url=None,
                  hosting=".COM",
-                 default_zoho_user_name:str=None,
-                 default_zoho_user_id:str=None,
+                 default_zoho_user_name: str = None,
+                 default_zoho_user_id: str = None,
                  ):
         """ Initialise a Zoho CRM connection by providing authentication details including a refresh token.
         Access tokens are obtained when needed. The base_url defaults to the live API for US usage;
@@ -115,14 +121,13 @@ class Zoho_crm:
         self.client_secret = client_secret
         self.base_url = base_url or "https://www.zohoapis.com/crm/v2/"
         self.hosting = hosting.upper() or ".COM"
-        self.zoho_user_cache = None #type: Optional[dict]
+        self.zoho_user_cache = None  # type: Optional[dict]
         self.default_zoho_user_name = default_zoho_user_name
         self.default_zoho_user_id = default_zoho_user_id
         self.token_file_path = token_file_dir / token_file_name
-        self.current_token =self._load_access_token()
+        self.current_token = self._load_access_token()
 
-
-    def _validate_response(self, r:requests.Response)->Optional[dict]:
+    def _validate_response(self, r: requests.Response) -> Optional[dict]:
         """ Called internally to deal with Zoho API responses. Will fetch a new access token if necessary.
         Not all errors are explicity handled; errors not handled here have no recovery option anyway,
         so an exception is raised."""
@@ -130,17 +135,17 @@ class Zoho_crm:
         if r.status_code == 200:
             return r.json()
         elif r.status_code == 201:
-            return {'result':True} #insert succeeded
-        elif r.status_code == 202: #multiple insert succeeded
-            return {'result':True}
-        elif r.status_code == 204: #co content
+            return {'result': True}  # insert succeeded
+        elif r.status_code == 202:  # multiple insert succeeded
+            return {'result': True}
+        elif r.status_code == 204:  # co content
             return None
         elif r.status_code == 304:  # nothing changed since the requested modified-since timestamp
             return None
         elif r.status_code == 401:
-            #assume invalid token
+            # assume invalid token
             self._refresh_access_token()
-            #retry the request somehow
+            # retry the request somehow
             # probably should use a 'retry' exception?
             orig_request = r.request
             orig_request.headers['Authorization'] = 'Zoho-oauthtoken ' + self.current_token['access_token']
@@ -148,11 +153,12 @@ class Zoho_crm:
 
             return new_resp.json()
         else:
-            raise RuntimeError(f"API failure trying: {r.reason} and status code: {r.status_code} and text {r.text}, attempted url was: {r.url}, unquoted is: {urllib.parse.unquote(r.url)}")
+            raise RuntimeError(
+                    f"API failure trying: {r.reason} and status code: {r.status_code} and text {r.text}, attempted url was: {r.url}, unquoted is: {urllib.parse.unquote(r.url)}")
 
-
-    def yield_page_from_module(self, module_name:str, criteria:str=None,
-                        parameters:dict=None,modified_since:datetime=None)->Generator[List[dict],None,None]:
+    def yield_page_from_module(self, module_name: str, criteria: str = None,
+                               parameters: dict = None, modified_since: datetime = None) -> Generator[
+        List[dict], None, None]:
         """ Yields a page of results, each page being a list of dicts.
 
         For use of the criteria parameter, please see search documentation: https://www.zoho.com/crm/help/api-diff/searchRecords.html
@@ -188,7 +194,8 @@ class Zoho_crm:
             if 'data' in r_json:
                 yield r_json['data']
             else:
-                raise RuntimeError(f"Did not receive the expected data format in the returned json when: url={url} parameters={parameters}")
+                raise RuntimeError(
+                        f"Did not receive the expected data format in the returned json when: url={url} parameters={parameters}")
             if 'info' in r_json:
                 if not r_json['info']['more_records']:
                     break
@@ -196,21 +203,19 @@ class Zoho_crm:
                 break
             page += 1
 
-
-    def get_users(self,user_type:str=None)->dict:
+    def get_users(self, user_type: str = None) -> dict:
         """
         Get zoho users, filtering by a Zoho CRM user type. The default value of None is mapped to 'AllUsers'
         """
         if self.zoho_user_cache is None:
             user_type = 'AllUsers' or user_type
             url = self.base_url + f"users?type={user_type}"
-            headers={'Authorization':'Zoho-oauthtoken ' + self.current_token['access_token']}
-            r = self.requests_session.get(url=url,headers=headers)
-            self.zoho_user_cache =  self._validate_response(r)
+            headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+            r = self.requests_session.get(url=url, headers=headers)
+            self.zoho_user_cache = self._validate_response(r)
         return self.zoho_user_cache
 
-
-    def finduser_by_name(self, full_name:str)->Tuple[str, str]:
+    def finduser_by_name(self, full_name: str) -> Tuple[str, str]:
         """ Tries to reutn the user as a tuple(full_name,Zoho user id), using the full full_name provided.
             The user must be active. If no such user is found, return the default user provided
             at initialisation of the Zoho_crm object."""
@@ -225,12 +230,11 @@ class Zoho_crm:
                     logger.debug(f"User is inactive in zoho crm: {full_name}")
                     return default_user_name, default_user_id
 
-        #not found
+        # not found
         logger.info(f"User not found in zoho: {full_name}")
-        return default_user_name,default_user_id
+        return default_user_name, default_user_id
 
-
-    def get_record_by_id(self, module_name, id)->dict:
+    def get_record_by_id(self, module_name, id) -> dict:
         """ Call the get record endpoint with an id"""
 
         url = self.base_url + f'{module_name}/{id}'
@@ -238,7 +242,6 @@ class Zoho_crm:
         r = self.requests_session.get(url=url, headers=headers)
         r_json = self._validate_response(r)
         return r_json['data'][0]
-
 
     def delete_from_module(self, module_name: str, record_id: str) -> Tuple[bool, dict]:
         """ deletes from a named Zoho CRM module"""
@@ -252,9 +255,8 @@ class Zoho_crm:
         else:
             return False, r.json()
 
-
-    def upsert_zoho_module(self, module_name:str, payload: Dict[str, List[Dict[str,str]]],
-                           criteria: str = None,) -> Tuple[bool, Dict[str,str]]:
+    def upsert_zoho_module(self, module_name: str, payload: Dict[str, List[Dict[str, str]]],
+                           criteria: str = None, ) -> Tuple[bool, Dict[str, str]]:
         """creation is done with the Record API and module "Accounts".
         Zoho does not make mandatory fields such as Account_Name unique.
         But here, a criteria string can be passed to identify a 'unique' record:
@@ -274,13 +276,13 @@ class Zoho_crm:
         See https://www.zoho.com/crm/help/api/v2/#create-specify-records
         """
 
-        update_existing_record = False   #by default, always insert
+        update_existing_record = False  # by default, always insert
         if criteria:
             if len(payload['data']) != 1:
                 raise RuntimeError("Only pass one record when using criteria")
             matches = []
             for data_block in self.yield_page_from_module(module_name=module_name,
-                               criteria=criteria):
+                                                          criteria=criteria):
                 matches += data_block
 
             if len(matches) > 0:
@@ -301,8 +303,7 @@ class Zoho_crm:
         else:
             return False, r.json()
 
-
-    def get_related_records(self,parent_module_name:str,child_module_name:str,parent_id:str) \
+    def get_related_records(self, parent_module_name: str, child_module_name: str, parent_id: str) \
             -> Tuple[bool, List[Dict]]:
         url = self.base_url + f'{parent_module_name}/{parent_id}/{child_module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -310,12 +311,11 @@ class Zoho_crm:
 
         r_json = self._validate_response(r)
         if r.ok:
-            return True,r_json['data']
+            return True, r_json['data']
         else:
-            return False,  r_json()
+            return False, r_json()
 
-
-    def _load_access_token(self)->dict:
+    def _load_access_token(self) -> dict:
         try:
             with self.token_file_path.open() as data_file:
                 data_loaded = json.load(data_file)
@@ -328,24 +328,20 @@ class Zoho_crm:
                     data_loaded = self._refresh_access_token()
 
                 return data_loaded
-        except (KeyError,FileNotFoundError,IOError) as e:
+        except (KeyError, FileNotFoundError, IOError) as e:
             new_token = self._refresh_access_token()
             return new_token
 
-
-    def _refresh_access_token(self)->dict:
+    def _refresh_access_token(self) -> dict:
         """ This forces a new token so it should only be called
         after we know we need a new token.
         Use load_access_token to get a token, it will call this if it needs to."""
-        if self.hosting == ".COM":
-            auth_host = "accounts.zoho.com"
-        elif self.hosting == ".AU":
-            auth_host = "accounts.zoho.com.au"
-        else:
+        auth_host = self.ACCOUNTS_HOST[self.hosting]
+        if not auth_host:
             raise RuntimeError(f"Zoho hosting {self.hosting} is not implemented")
-        url=(f"https://{auth_host}/oauth/v2/token?refresh_token="
-             f"{self.refresh_token}&client_id={self.client_id}&"
-             f"client_secret={self.client_secret}&grant_type=refresh_token")
+        url = (f"https://{auth_host}/oauth/v2/token?refresh_token="
+               f"{self.refresh_token}&client_id={self.client_id}&"
+               f"client_secret={self.client_secret}&grant_type=refresh_token")
         r = requests.post(url=url)
         if r.status_code == 200:
             new_token = r.json()

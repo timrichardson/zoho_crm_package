@@ -26,6 +26,7 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
                             client_secret=zoho_keys['client_secret'],
                             base_url='https://crmsandbox.zoho.com/crm/v2/',
                             default_zoho_user_id=zoho_keys['user_id'],
+                            hosting=".COM",
                             token_file_dir=tmp_path_factory.mktemp('zohocrm'))
     else:
         zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
@@ -33,6 +34,7 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
                             client_secret=zoho_keys['client_secret'],
                             base_url="https://www.zohoapis.com/crm/v2/",  #"https://www.zohoapis.com/crm/v2/"
                             default_zoho_user_id=zoho_keys['user_id'],
+                            hosting=".COM",
                             token_file_dir=tmp_path_factory.mktemp('zohocrm'))
 
     return zoho_crm

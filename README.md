@@ -63,6 +63,11 @@ Zoho CRM can be hosted in different geographies. The URLs below assume you are u
 If, say, you are using .com.au (Australian hosting) then use the .com.au version of Zoho URLs.
 For example, the Zoho Developer Console becomes https://accounts.zoho.com.au/developerconsole
 
+When constructing the connector object, pass hosting = ".COM" or ".AU"
+.COM is the default. 
+The other geographies are not tested.
+
+
 Read more about Multi DC: https://www.zoho.com/crm/developer/docs/api/v2/multi-dc.html
 When using self-clients for Australia, make the request of accounts.zoho.com.au succeeds. This is contrary to Zoho's documentation
 
@@ -96,8 +101,33 @@ Usage
 See test_zoho_crm_connector.py in tests for some examples.
 Note the when searching, parentheses must be escaped. See the code.
 
-[Documentation](docs/build/html/index.html)
 
+    @pytest.fixture(scope='session')
+    def zoho_crm(tmp_path_factory)->Zoho_crm:
+        zoho_keys = {
+            'refresh_token': os.getenv('ZOHOCRM_REFRESH_TOKEN'),
+            'client_id': os.getenv('ZOHOCRM_CLIENT_ID'),
+            'client_secret': os.getenv('ZOHOCRM_CLIENT_SECRET'),
+            'user_id': os.getenv('ZOHOCRM_DEFAULT_USERID')
+        }
+        if not os.getenv("ZOHO_SANDBOX") or os.getenv("ZOHO_SANDBOX") == "True":
+            zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
+                                client_id=zoho_keys['client_id'],
+                                client_secret=zoho_keys['client_secret'],
+                                base_url='https://crmsandbox.zoho.com/crm/v2/',
+                                default_zoho_user_id=zoho_keys['user_id'],
+                                hosting=".COM",
+                                token_file_dir=tmp_path_factory.mktemp('zohocrm'))
+        else:
+            zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
+                                client_id=zoho_keys['client_id'],
+                                client_secret=zoho_keys['client_secret'],
+                                base_url="https://www.zohoapis.com/crm/v2/", 
+                                default_zoho_user_id=zoho_keys['user_id'],
+                                hosting=".COM",
+                                token_file_dir=tmp_path_factory.mktemp('zohocrm'))
+
+    return zoho_crm
 
 
 
