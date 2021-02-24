@@ -340,7 +340,7 @@ class Zoho_crm:
         if self.hosting == ".COM":
             auth_host = "accounts.zoho.com"
         elif self.hosting == ".AU":
-            auth_host = "accounts.zoho.com"
+            auth_host = "accounts.zoho.com.au"
         else:
             raise RuntimeError(f"Zoho hosting {self.hosting} is not implemented")
         url=(f"https://{auth_host}/oauth/v2/token?refresh_token="
