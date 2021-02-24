@@ -56,6 +56,19 @@ it seems to need a distinct client ID via the developer console.
 Step 2: Generating self-authorized grant and refresh token
 ----------------------------------------------------------
 
+Note
+----
+
+Zoho CRM can be hosted in different geographies. The URLs below assume you are using the .com version.
+If, say, you are using .com.au (Australian hosting) then use the .com.au version of Zoho URLs.
+For example, the Zoho Developer Console becomes https://accounts.zoho.com.au/developerconsole
+
+Read more about Multi DC: https://www.zoho.com/crm/developer/docs/api/v2/multi-dc.html
+When using self-clients for Australia, make the request of accounts.zoho.com.au succeeds. This is contrary to Zoho's documentation
+
+----
+
+
 For self client apps, the self authorized grant token should be generated from the Zoho Developer Console (https://accounts.zoho.com/developerconsole)
 
 Visit https://accounts.zoho.com/developerconsole

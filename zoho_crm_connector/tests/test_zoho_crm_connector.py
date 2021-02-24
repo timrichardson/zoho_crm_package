@@ -1,7 +1,9 @@
 
 import os
-from datetime import datetime,timezone
+from datetime import datetime, timezone
+
 import pytest
+
 from zoho_crm_connector import Zoho_crm
 
 """ These tests create records; run in the sandbox account."""
@@ -18,13 +20,21 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
         'client_secret': os.getenv('ZOHOCRM_CLIENT_SECRET'),
         'user_id': os.getenv('ZOHOCRM_DEFAULT_USERID')
     }
+    if not os.getenv("ZOHO_SANDBOX") or os.getenv("ZOHO_SANDBOX") == "True":
+        zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
+                            client_id=zoho_keys['client_id'],
+                            client_secret=zoho_keys['client_secret'],
+                            base_url='https://crmsandbox.zoho.com/crm/v2/',
+                            default_zoho_user_id=zoho_keys['user_id'],
+                            token_file_dir=tmp_path_factory.mktemp('zohocrm'))
+    else:
+        zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
+                            client_id=zoho_keys['client_id'],
+                            client_secret=zoho_keys['client_secret'],
+                            base_url="https://www.zohoapis.com/crm/v2/",  #"https://www.zohoapis.com/crm/v2/"
+                            default_zoho_user_id=zoho_keys['user_id'],
+                            token_file_dir=tmp_path_factory.mktemp('zohocrm'))
 
-    zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
-                        client_id=zoho_keys['client_id'],
-                        client_secret=zoho_keys['client_secret'],
-                        base_url='https://crmsandbox.zoho.com/crm/v2/',
-                        default_zoho_user_id=zoho_keys['user_id'],
-                        token_file_dir=tmp_path_factory.mktemp('zohocrm'))
     return zoho_crm
 
 
@@ -203,6 +213,11 @@ def test_related_records(zoho_crm):
     account = accounts[0]
     success,contacts = zoho_crm.get_related_records(parent_module_name="Accounts",child_module_name="Contacts",parent_id=account['id'])
     assert success
+
+def test_get_deal_list(zoho_crm):
+    deals = [deal for page in
+                zoho_crm.yield_page_from_module(module_name="Deals") for deal in page for deal in page]
+    assert deals, "Fail, no matching accounts, can't continue with test"
 
 
 #@pytest.mark.skip

@@ -30,7 +30,7 @@ import logging
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, List, Dict, Generator
+from typing import Dict, Generator, List, Optional, Tuple
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -100,8 +100,10 @@ class Zoho_crm:
 
     def __init__(self,refresh_token:str,client_id:str,client_secret:str,token_file_dir:Path,
                  base_url=None,
+                 hosting=".COM",
                  default_zoho_user_name:str=None,
-                 default_zoho_user_id:str=None):
+                 default_zoho_user_id:str=None,
+                 ):
         """ Initialise a Zoho CRM connection by providing authentication details including a refresh token.
         Access tokens are obtained when needed. The base_url defaults to the live API for US usage;
         another base_url can be provided (for the sandbox API, for instance)
@@ -112,7 +114,8 @@ class Zoho_crm:
         self.client_id = client_id
         self.client_secret = client_secret
         self.base_url = base_url or "https://www.zohoapis.com/crm/v2/"
-        self.zoho_user_cache = None #type: dict
+        self.hosting = hosting.upper() or ".COM"
+        self.zoho_user_cache = None #type: Optional[dict]
         self.default_zoho_user_name = default_zoho_user_name
         self.default_zoho_user_id = default_zoho_user_id
         self.token_file_path = token_file_dir / token_file_name
@@ -334,7 +337,13 @@ class Zoho_crm:
         """ This forces a new token so it should only be called
         after we know we need a new token.
         Use load_access_token to get a token, it will call this if it needs to."""
-        url=(f"https://accounts.zoho.com/oauth/v2/token?refresh_token="
+        if self.hosting == ".COM":
+            auth_host = "accounts.zoho.com"
+        elif self.hosting == ".AU":
+            auth_host = "accounts.zoho.com"
+        else:
+            raise RuntimeError(f"Zoho hosting {self.hosting} is not implemented")
+        url=(f"https://{auth_host}/oauth/v2/token?refresh_token="
              f"{self.refresh_token}&client_id={self.client_id}&"
              f"client_secret={self.client_secret}&grant_type=refresh_token")
         r = requests.post(url=url)
