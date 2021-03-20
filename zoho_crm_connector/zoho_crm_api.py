@@ -42,7 +42,7 @@ class APIQuotaExceeded(Exception):
 def _requests_retry_session(
         retries=10,
         backoff_factor=2,
-        status_forcelist=(500, 502, 503, 504, 429),
+        status_forcelist=(500, 502, 503, 504), #remove 429 here, the CRM retry functionality is a 24 hour rolling limit and can't be recovered by waiting for a minute or so
         session=None,
 ) -> requests.Session:
     session = session or requests.Session()
