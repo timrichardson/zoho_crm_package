@@ -36,6 +36,8 @@ from requests.adapters import HTTPAdapter, Retry
 
 logger = logging.getLogger()
 
+class APIQuotaExceeded(Exception):
+    pass
 
 def _requests_retry_session(
         retries=10,
@@ -138,7 +140,7 @@ class Zoho_crm:
             return {'result': True}  # insert succeeded
         elif r.status_code == 202:  # multiple insert succeeded
             return {'result': True}
-        elif r.status_code == 204:  # co content
+        elif r.status_code == 204:  # no content
             return None
         elif r.status_code == 304:  # nothing changed since the requested modified-since timestamp
             return None
@@ -152,6 +154,9 @@ class Zoho_crm:
             new_resp = self.requests_session.send(orig_request)
 
             return new_resp.json()
+        elif r.status_code == 429:
+            raise APIQuotaExceeded
+        # assume invalid token
         else:
             raise RuntimeError(
                     f"API failure trying: {r.reason} and status code: {r.status_code} and text {r.text}, attempted url was: {r.url}, unquoted is: {urllib.parse.unquote(r.url)}")
