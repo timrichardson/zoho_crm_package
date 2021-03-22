@@ -20,7 +20,7 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
         'client_secret': os.getenv('ZOHOCRM_CLIENT_SECRET'),
         'user_id': os.getenv('ZOHOCRM_DEFAULT_USERID')
     }
-    if not os.getenv("ZOHO_SANDBOX") or os.getenv("ZOHO_SANDBOX") == "True":
+    if os.getenv("ZOHO_SANDBOX") or os.getenv("ZOHO_SANDBOX") == "True":
         zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
                             client_id=zoho_keys['client_id'],
                             client_secret=zoho_keys['client_secret'],
@@ -44,11 +44,18 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
 
 def count_test_accounts(zoho_crm):
     """ this shows how to search a moduule"""
-
     accounts = [account for page in
         zoho_crm.yield_page_from_module(module_name="Accounts", criteria='(Account_Name:equals:GrowthPath Pty Ltd)')
                 for account in page]
     return len(accounts)
+
+def test_use_in_criteria(zoho_crm):
+    """ this shows how to search a moduule"""
+    in_list = ["Completed",]
+    quotes = [quote for page in
+        zoho_crm.yield_page_from_module(module_name="Deals", criteria=f'(Stage:in:{",".join(in_list)})')
+                for quote in page]
+    return len(quotes)
 
 
 def test_delete_accounts(zoho_crm):
@@ -229,7 +236,8 @@ def test_get_users(zoho_crm):
     assert users,"Fail, no users"
 
 
-
+def get_records_through_coql_query(zoho_crm):
+    pass
 
 
 

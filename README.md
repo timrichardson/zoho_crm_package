@@ -149,3 +149,9 @@ Uploading
 =========
 python3 setup.py sdist bdist_wheel
  python3 -m twine upload --skip-existing dist/*
+
+
+Changes
+========
+v 0.4.0: No longer retry when API limit is reached, raise an exception instead. 
+Reason: the Zoho CRM API rate limit is 24 hour rolling, and it can take minutes to get credits back. Too long to wait.

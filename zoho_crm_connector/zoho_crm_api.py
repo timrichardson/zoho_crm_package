@@ -308,8 +308,8 @@ class Zoho_crm:
         else:
             return False, r.json()
 
-    def get_related_records(self, parent_module_name: str, child_module_name: str, parent_id: str) \
-            -> Tuple[bool, List[Dict]]:
+
+    def get_related_records(self, parent_module_name: str, child_module_name: str, parent_id: str)->Tuple[bool, List[Dict]]:
         url = self.base_url + f'{parent_module_name}/{parent_id}/{child_module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
         r = self.requests_session.get(url=url, headers=headers)
@@ -318,7 +318,18 @@ class Zoho_crm:
         if r.ok:
             return True, r_json['data']
         else:
-            return False, r_json()
+            return False, []
+
+
+    def get_records_through_coql_query(self, query:str) -> List[Dict]:
+        url = self.base_url + "coql"
+        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+        r = self.requests_session.post(url=url, headers=headers,json={"select_query":query})
+        r_json = self._validate_response(r)
+        if r.ok:
+            return r_json['data']
+        else:
+            return []
 
     def _load_access_token(self) -> dict:
         try:
@@ -336,6 +347,8 @@ class Zoho_crm:
         except (KeyError, FileNotFoundError, IOError) as e:
             new_token = self._refresh_access_token()
             return new_token
+
+
 
     def _refresh_access_token(self) -> dict:
         """ This forces a new token so it should only be called
