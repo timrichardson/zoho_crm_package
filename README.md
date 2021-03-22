@@ -4,7 +4,7 @@ Zoho CRM Connector
 Zoho provides a Python SDK, but I found it a bit hard to use and it seems a bit complicated.
 For instance, there is a dependency on mysql.
 This module is a little more pragmatic and it returns pages of results with yield.
-This code is in regular use for some years, as of 2021. I haven't updated this because it works, but the code is not very nice and I would be embarassed to call it V1. So it is stuck in limbo: it is ok, but not heavenly.
+This code is in production use for some years, as of 2021. 
 
 
 Install
@@ -72,7 +72,6 @@ Read more about Multi DC: https://www.zoho.com/crm/developer/docs/api/v2/multi-d
 When using self-clients for Australia, make the request of accounts.zoho.com.au succeeds. This is contrary to Zoho's documentation
 
 ----
-
 
 For self client apps, the self authorized grant token should be generated from the Zoho Developer Console (https://accounts.zoho.com/developerconsole)
 
@@ -155,3 +154,5 @@ Changes
 ========
 v 0.4.0: No longer retry when API limit is reached, raise an exception instead. 
 Reason: the Zoho CRM API rate limit is 24 hour rolling, and it can take minutes to get credits back. Too long to wait.
+
+v0.4.1: small changes to readme. Also, v.0.4.0 has a test case using the IN criteria which may be interesting.
