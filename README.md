@@ -152,7 +152,10 @@ python3 setup.py sdist bdist_wheel
 
 Changes
 ========
+v0.4.2 Fix a potential date bug with modified-since header
+
+v0.4.1: small changes to readme. Also, v.0.4.0 has a test case using the IN criteria which may be interesting.
+
 v 0.4.0: No longer retry when API limit is reached, raise an exception instead. 
 Reason: the Zoho CRM API rate limit is 24 hour rolling, and it can take minutes to get credits back. Too long to wait.
 
-v0.4.1: small changes to readme. Also, v.0.4.0 has a test case using the IN criteria which may be interesting.
