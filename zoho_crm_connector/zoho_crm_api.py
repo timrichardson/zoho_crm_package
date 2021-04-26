@@ -89,6 +89,11 @@ def escape_zoho_characters_v2(input_string) -> str:
         return input_string.translate(table)
 
 
+def convert_datetime_to_zoho_crm_time(dt:datetime)->str:
+    #iso format but no fractional seconds
+    return datetime.strftime(dt,"%Y-%m-%dT%H:%M:%S%z")
+
+
 class Zoho_crm:
     """ An authenticated connection to zoho crm.
 
@@ -188,7 +193,8 @@ class Zoho_crm:
         if criteria:
             parameters['criteria'] = criteria
         if modified_since:
-            headers['If-Modified-Since'] = modified_since.isoformat()
+            #headers['If-Modified-Since'] = modified_since.isoformat()
+            headers['If-Modified-Since'] = convert_datetime_to_zoho_crm_time(modified_since) #ensure no fractional seconds
         while True:
             parameters['page'] = page
             r = self.requests_session.get(url=url, headers=headers, params=urllib.parse.urlencode(parameters))
