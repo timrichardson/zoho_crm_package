@@ -258,16 +258,16 @@ class Zoho_crm:
         r_json = self._validate_response(r)
         return r_json['data'][0]
 
-    def yield_deleted_records_from_module(self, module_name:str, type:str='All',
+    def yield_deleted_records_from_module(self, module_name:str, type:str='all',
         modified_since:datetime=None)->Generator[List[dict],None,None]:
         """ Yields a page of deleted record results.
 
         Args:
             module_name (str): The module API name.
             type (str): Filter deleted records by the following types:
-                'All': To get the list of all deleted records.
-                'Recycle': To get the list of deleted records from recycle bin.
-                'Permanent': To get the list of permanently deleted records.
+                'all': To get the list of all deleted records.
+                'recycle': To get the list of deleted records from recycle bin.
+                'permanent': To get the list of permanently deleted records.
             modified_since (datetime.datetime): Return records deleted after this date.
         Returns:
             A generator that yields pages of deleted records as a list of dictionaries.
@@ -310,8 +310,28 @@ class Zoho_crm:
         else:
             return False, r.json()
 
-    def upsert_zoho_module(self, module_name: str, payload: Dict[str, List[Dict[str, str]]],
-                           criteria: str = None, ) -> Tuple[bool, Dict[str, str]]:
+    def update_zoho_module(self, module_name: str,
+                           payload: Dict[str, List[Dict]]
+                           ) -> Tuple[bool, Dict]:
+        """Update, modified from upsert
+        """
+        url = self.base_url + module_name
+        headers = {
+            'Authorization':
+            'Zoho-oauthtoken ' + self.current_token['access_token']
+        }
+        if 'trigger' not in payload:
+            payload['trigger'] = []
+        r = self.requests_session.put(url=url,
+                                          headers=headers,
+                                          json=payload)
+        if r.ok:
+            return True, r.json()
+        else:
+            return False, r.json()
+
+    def upsert_zoho_module(self, module_name:str, payload: Dict[str, List[Dict]],
+                           criteria: str = None,) -> Tuple[bool, Dict]:
         """creation is done with the Record API and module "Accounts".
         Zoho does not make mandatory fields such as Account_Name unique.
         But here, a criteria string can be passed to identify a 'unique' record:
