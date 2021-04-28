@@ -152,6 +152,8 @@ python3 setup.py sdist bdist_wheel
 
 Changes
 ========
+v0.4.3 Handle updating errors such as duplicate value violation
+
 v0.4.2 Fix a potential date bug with modified-since header
 
 v0.4.1: small changes to readme. Also, v.0.4.0 has a test case using the IN criteria which may be interesting.
