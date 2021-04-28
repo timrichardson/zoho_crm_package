@@ -309,8 +309,11 @@ class Zoho_crm:
         else:
             r = self.requests_session.post(url=url, headers=headers, json=payload)
         if r.ok:
-            record_id = r.json()['data'][0]['details']['id']
-            return True, self.get_record_by_id(module_name=module_name, id=record_id)
+            if r.status_code == 202: #could be duplicate
+                return False, r.json()
+            else:
+                record_id = r.json()['data'][0]['details']['id']
+                return True, self.get_record_by_id(module_name=module_name, id=record_id)
         else:
             return False, r.json()
 
