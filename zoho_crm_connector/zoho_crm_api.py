@@ -258,6 +258,46 @@ class Zoho_crm:
         r_json = self._validate_response(r)
         return r_json['data'][0]
 
+    def yield_deleted_records_from_module(self, module_name:str, type:str='All',
+        modified_since:datetime=None)->Generator[List[dict],None,None]:
+        """ Yields a page of deleted record results.
+
+        Args:
+            module_name (str): The module API name.
+            type (str): Filter deleted records by the following types:
+                'All': To get the list of all deleted records.
+                'Recycle': To get the list of deleted records from recycle bin.
+                'Permanent': To get the list of permanently deleted records.
+            modified_since (datetime.datetime): Return records deleted after this date.
+        Returns:
+            A generator that yields pages of deleted records as a list of dictionaries.
+
+        """
+        page = 1
+        url = self.base_url + f'{module_name}/deleted'
+
+        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+        parameters = {'type': type}
+        if modified_since:
+            headers['If-Modified-Since'] = modified_since.isoformat()
+        while True:
+            parameters['page'] = page
+            r = self.requests_session.get(url=url, headers=headers, params=urllib.parse.urlencode(parameters))
+
+            r_json = self._validate_response(r)
+            if not r_json:
+                return None
+            if 'data' in r_json:
+                yield r_json['data']
+            else:
+                raise RuntimeError(f"Did not receive the expected data format in the returned json when: url={url} parameters={parameters}")
+            if 'info' in r_json:
+                if not r_json['info']['more_records']:
+                    break
+            else:
+                break
+            page += 1
+
     def delete_from_module(self, module_name: str, record_id: str) -> Tuple[bool, dict]:
         """ deletes from a named Zoho CRM module"""
 
