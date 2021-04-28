@@ -19,7 +19,7 @@ The Zoho licence is not specified at the time I referred to it, so I assumed pub
 Handy notes:
 
 Search criteria does not work across modules (where the json returns is a {name,id} object)
-You will need to enumerate a super-set of candidate results and search, or use related_records (see test case)
+You will need to enumerate a super-set of candidate results and search, or use get_related_records (see test case)
 but you will still need to enumerate. This is too complicated to put in the API.
 
 """
@@ -36,13 +36,16 @@ from requests.adapters import HTTPAdapter, Retry
 
 logger = logging.getLogger()
 
+
 class APIQuotaExceeded(Exception):
     pass
+
 
 def _requests_retry_session(
         retries=10,
         backoff_factor=2,
-        status_forcelist=(500, 502, 503, 504), #remove 429 here, the CRM retry functionality is a 24 hour rolling limit and can't be recovered by waiting for a minute or so
+        status_forcelist=(500, 502, 503, 504),
+        # remove 429 here, the CRM retry functionality is a 24 hour rolling limit and can't be recovered by waiting for a minute or so
         session=None,
 ) -> requests.Session:
     session = session or requests.Session()
@@ -89,9 +92,9 @@ def escape_zoho_characters_v2(input_string) -> str:
         return input_string.translate(table)
 
 
-def convert_datetime_to_zoho_crm_time(dt:datetime)->str:
-    #iso format but no fractional seconds
-    return datetime.strftime(dt,"%Y-%m-%dT%H:%M:%S%z")
+def convert_datetime_to_zoho_crm_time(dt: datetime) -> str:
+    # iso format but no fractional seconds
+    return datetime.strftime(dt, "%Y-%m-%dT%H:%M:%S%z")
 
 
 class Zoho_crm:
@@ -193,8 +196,9 @@ class Zoho_crm:
         if criteria:
             parameters['criteria'] = criteria
         if modified_since:
-            #headers['If-Modified-Since'] = modified_since.isoformat()
-            headers['If-Modified-Since'] = convert_datetime_to_zoho_crm_time(modified_since) #ensure no fractional seconds
+            # headers['If-Modified-Since'] = modified_since.isoformat()
+            headers['If-Modified-Since'] = convert_datetime_to_zoho_crm_time(
+                modified_since)  # ensure no fractional seconds
         while True:
             parameters['page'] = page
             r = self.requests_session.get(url=url, headers=headers, params=urllib.parse.urlencode(parameters))
@@ -309,7 +313,7 @@ class Zoho_crm:
         else:
             r = self.requests_session.post(url=url, headers=headers, json=payload)
         if r.ok:
-            if r.status_code == 202: #could be duplicate
+            if r.status_code == 202:  # could be duplicate
                 return False, r.json()
             else:
                 try:
@@ -320,23 +324,27 @@ class Zoho_crm:
         else:
             return False, r.json()
 
-
-    def get_related_records(self, parent_module_name: str, child_module_name: str, parent_id: str)->Tuple[bool, List[Dict]]:
+    def get_related_records(self, parent_module_name: str, child_module_name: str, parent_id: str,
+                            modified_since: datetime = None) \
+            -> Tuple[bool, Optional[List[Dict]]]:
         url = self.base_url + f'{parent_module_name}/{parent_id}/{child_module_name}'
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+        if modified_since:
+            headers['If-Modified-Since'] = modified_since.isoformat()
         r = self.requests_session.get(url=url, headers=headers)
 
         r_json = self._validate_response(r)
-        if r.ok:
+        if r.ok and r_json is not None:
             return True, r_json['data']
+        elif r.ok:
+            return True, r_json
         else:
-            return False, []
+            return False, r_json
 
-
-    def get_records_through_coql_query(self, query:str) -> List[Dict]:
+    def get_records_through_coql_query(self, query: str) -> List[Dict]:
         url = self.base_url + "coql"
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
-        r = self.requests_session.post(url=url, headers=headers,json={"select_query":query})
+        r = self.requests_session.post(url=url, headers=headers, json={"select_query": query})
         r_json = self._validate_response(r)
         if r.ok:
             return r_json['data']
@@ -359,8 +367,6 @@ class Zoho_crm:
         except (KeyError, FileNotFoundError, IOError) as e:
             new_token = self._refresh_access_token()
             return new_token
-
-
 
     def _refresh_access_token(self) -> dict:
         """ This forces a new token so it should only be called
