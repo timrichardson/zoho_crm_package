@@ -411,6 +411,19 @@ class Zoho_crm:
         else:
             return []
 
+    def get_module_field_api_names(self,module_name:str) -> List[str]:
+        """ uses Fields Meta Data but just returns a list of field API names """
+        url = self.base_url + f"settings/fields?module={module_name}"
+        headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+        r = self.requests_session.get(url=url, headers=headers)
+        r_json = self._validate_response(r)
+        if r.ok and r_json is not None:
+            field_list = [f["api_name"] for f in r_json["fields"]]
+            return field_list
+        else:
+            raise RuntimeError(f"did not receive valid data for get_module_field_names {module_name}")
+
+
     def _load_access_token(self) -> dict:
         try:
             with self.token_file_path.open() as data_file:

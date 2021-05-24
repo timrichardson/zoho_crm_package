@@ -1,4 +1,4 @@
-Zoho CRM Connector
+Zoho CRM Connector for Python
 ==================
 
 Zoho provides a Python SDK, but I found it a bit hard to use and it seems a bit complicated.

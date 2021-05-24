@@ -100,6 +100,9 @@ def test_delete_and_upsert_account(zoho_crm):
     assert count_test_accounts(zoho_crm) == 1, "There should be one record now"
 
 
+def test_get_field_api_names(zoho_crm):
+    field_api_names = zoho_crm.get_module_field_api_names(module_name="Accounts")
+    assert field_api_names
 
 #@pytest.mark.skip
 def test_add_and_search_contacts(zoho_crm):
