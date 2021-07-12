@@ -53,11 +53,11 @@ def _requests_retry_session(
         A retry is initiated if the request method is in ``method_whitelist``
         and the response status code is in ``status_forcelist``."""
     retry = Retry(
-            total=retries,
-            read=retries,
-            connect=retries,
-            backoff_factor=backoff_factor,
-            status_forcelist=status_forcelist,
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
@@ -167,7 +167,7 @@ class Zoho_crm:
         # assume invalid token
         else:
             raise RuntimeError(
-                    f"API failure trying: {r.reason} and status code: {r.status_code} and text {r.text}, attempted url was: {r.url}, unquoted is: {urllib.parse.unquote(r.url)}")
+                f"API failure trying: {r.reason} and status code: {r.status_code} and text {r.text}, attempted url was: {r.url}, unquoted is: {urllib.parse.unquote(r.url)}")
 
     def yield_page_from_module(self, module_name: str, criteria: str = None,
                                parameters: dict = None, modified_since: datetime = None) -> Generator[
@@ -210,7 +210,7 @@ class Zoho_crm:
                 yield r_json['data']
             else:
                 raise RuntimeError(
-                        f"Did not receive the expected data format in the returned json when: url={url} parameters={parameters}")
+                    f"Did not receive the expected data format in the returned json when: url={url} parameters={parameters}")
             if 'info' in r_json:
                 if not r_json['info']['more_records']:
                     break
@@ -258,8 +258,8 @@ class Zoho_crm:
         r_json = self._validate_response(r)
         return r_json['data'][0]
 
-    def yield_deleted_records_from_module(self, module_name:str, type:str='all',
-        modified_since:datetime=None)->Generator[List[dict],None,None]:
+    def yield_deleted_records_from_module(self, module_name: str, type: str = 'all',
+                                          modified_since: datetime = None) -> Generator[List[dict], None, None]:
         """ Yields a page of deleted record results.
 
         Args:
@@ -290,7 +290,8 @@ class Zoho_crm:
             if 'data' in r_json:
                 yield r_json['data']
             else:
-                raise RuntimeError(f"Did not receive the expected data format in the returned json when: url={url} parameters={parameters}")
+                raise RuntimeError(
+                    f"Did not receive the expected data format in the returned json when: url={url} parameters={parameters}")
             if 'info' in r_json:
                 if not r_json['info']['more_records']:
                     break
@@ -318,20 +319,20 @@ class Zoho_crm:
         url = self.base_url + module_name
         headers = {
             'Authorization':
-            'Zoho-oauthtoken ' + self.current_token['access_token']
+                'Zoho-oauthtoken ' + self.current_token['access_token']
         }
         if 'trigger' not in payload:
             payload['trigger'] = []
         r = self.requests_session.put(url=url,
-                                          headers=headers,
-                                          json=payload)
+                                      headers=headers,
+                                      json=payload)
         if r.ok:
             return True, r.json()
         else:
             return False, r.json()
 
-    def upsert_zoho_module(self, module_name:str, payload: Dict[str, List[Dict]],
-                           criteria: str = None,) -> Tuple[bool, Dict]:
+    def upsert_zoho_module(self, module_name: str, payload: Dict[str, List[Dict]],
+                           criteria: str = None, ) -> Tuple[bool, Dict]:
         """creation is done with the Record API and module "Accounts".
         Zoho does not make mandatory fields such as Account_Name unique.
         But here, a criteria string can be passed to identify a 'unique' record:
@@ -411,7 +412,7 @@ class Zoho_crm:
         else:
             return []
 
-    def get_module_field_api_names(self,module_name:str) -> List[str]:
+    def get_module_field_api_names(self, module_name: str) -> List[str]:
         """ uses Fields Meta Data but just returns a list of field API names """
         url = self.base_url + f"settings/fields?module={module_name}"
         headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
@@ -422,7 +423,6 @@ class Zoho_crm:
             return field_list
         else:
             raise RuntimeError(f"did not receive valid data for get_module_field_names {module_name}")
-
 
     def _load_access_token(self) -> dict:
         try:

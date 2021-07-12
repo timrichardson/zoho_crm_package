@@ -147,7 +147,7 @@ testing needs a connection to zoho. Set three environment variables, because thi
 Uploading
 =========
 python3 setup.py sdist bdist_wheel
- python3 -m twine upload --skip-existing dist/*
+python3 -m twine upload --skip-existing dist/*
 
 
 Changes
