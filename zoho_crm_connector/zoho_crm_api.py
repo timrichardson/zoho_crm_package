@@ -456,10 +456,12 @@ class Zoho_crm:
             new_token = r.json()
             logger.info(f"New token: {new_token}")
             if 'access_token' not in new_token:
-                logger.info(f"Token does not look valid")
-            self.current_token = new_token
-            with self.token_file_path.open('w') as outfile:
-                json.dump(new_token, outfile)
-            return new_token
+                logger.error(f"Token is not valid")
+                raise RuntimeError(f"Zoho refresh token is not valid: {new_token}")
+            else:
+                self.current_token = new_token
+                with self.token_file_path.open('w') as outfile:
+                    json.dump(new_token, outfile)
+                return new_token
         else:
             raise RuntimeError(f"API failure trying to get access token: {r.reason}")
