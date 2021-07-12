@@ -153,8 +153,9 @@ python3 setup.py sdist bdist_wheel
 Changes
 ========
 
-v0.4.4 Merge new feature for kdodia (Karan Dodia): yield_deleted_records_from_module, update_zoho_module, and fixes for 204 response get_related_records
+v0.4.5. Raise Runtime exception if token refresh fails to return a valid token
 
+v0.4.4 Merge new feature for kdodia (Karan Dodia): yield_deleted_records_from_module, update_zoho_module, and fixes for 204 response get_related_records
 
 v0.4.3 Handle updating errors such as duplicate value violation
 
