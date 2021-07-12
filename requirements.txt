@@ -1,0 +1,5 @@
+setuptools~=46.4.0
+requests~=2.23.0
+Sphinx~=3.0.3
+PySimpleGUI~=4.45.0
+pytest~=5.4.2

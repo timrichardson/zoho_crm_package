@@ -29,7 +29,7 @@ Step 1: Registering a Zoho Client
 
 Since Zoho CRM APIs are authenticated with OAuth2 standards, you should register your client app with Zoho. To register your app:
 
-Visit this page https://accounts.zoho.com/developerconsole.
+Visit this page https://api-console.zoho.com/
 Click on “Add Client ID”.
 Enter Client Name, Client Domain and Redirect URI.
 Select the Client Type as "Web based".
@@ -94,6 +94,12 @@ this works with curl:
 ``curl -d "code=1000.2f...68&redirect_uri=https://www.growthpath.com.au/callback&client_id=1000.ZZZZ...99&client_secret=bzz...123&grant_type=authorization_code" -X POST https://accounts.zoho.com/oauth/v2/token``
 
 Copy the refresh token ... this doesn't expire, and it's how access is granted
+
+### Experimental helper script
+
+There is a little python script to help get teh refresh token from a self client. 
+
+`python get_token.py`
 
 Usage
 =====
