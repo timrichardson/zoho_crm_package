@@ -163,7 +163,7 @@ class Zoho_crm:
 
             return new_resp.json()
         elif r.status_code == 429:
-            raise APIQuotaExceeded
+            raise APIQuotaExceeded("API Quota exceeded, error 429")
         # assume invalid token
         else:
             raise RuntimeError(
