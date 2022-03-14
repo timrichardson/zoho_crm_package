@@ -159,6 +159,8 @@ python3 -m twine upload --skip-existing dist/*
 Changes
 ========
 
+v0.4.6. Add a message to Quota Exceeded exception
+
 v0.4.5. Raise Runtime exception if token refresh fails to return a valid token
 
 v0.4.4 Merge new feature for kdodia (Karan Dodia): yield_deleted_records_from_module, update_zoho_module, and fixes for 204 response get_related_records
