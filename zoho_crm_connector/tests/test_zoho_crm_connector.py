@@ -18,14 +18,14 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
         'refresh_token': os.getenv('ZOHOCRM_REFRESH_TOKEN'),
         'client_id': os.getenv('ZOHOCRM_CLIENT_ID'),
         'client_secret': os.getenv('ZOHOCRM_CLIENT_SECRET'),
-        'user_id': os.getenv('ZOHOCRM_DEFAULT_USERID')
+        'user_name': os.getenv('ZOHOCRM_DEFAULT_USER_NAME')
     }
     if os.getenv("ZOHO_SANDBOX") or os.getenv("ZOHO_SANDBOX") == "True":
         zoho_crm = Zoho_crm(refresh_token=zoho_keys['refresh_token'],
                             client_id=zoho_keys['client_id'],
                             client_secret=zoho_keys['client_secret'],
                             base_url='https://crmsandbox.zoho.com/crm/v2/',
-                            default_zoho_user_id=zoho_keys['user_id'],
+                            default_zoho_user_name=zoho_keys['user_name'],
                             hosting=".COM",
                             token_file_dir=tmp_path_factory.mktemp('zohocrm'))
     else:
@@ -33,20 +33,30 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
                             client_id=zoho_keys['client_id'],
                             client_secret=zoho_keys['client_secret'],
                             base_url="https://www.zohoapis.com/crm/v2/",  #"https://www.zohoapis.com/crm/v2/"
-                            default_zoho_user_id=zoho_keys['user_id'],
+                            default_zoho_user_name=zoho_keys['user_name'],
                             hosting=".COM",
                             token_file_dir=tmp_path_factory.mktemp('zohocrm'))
+
+    if not zoho_crm.default_zoho_user_id:
+        zoho_users = zoho_crm.get_users()
+
+        assert zoho_users
+        for zu in zoho_users['users']:
+            if zu["full_name"] == zoho_keys["user_name"] and zu["status"] == "active":
+                zoho_crm.default_zoho_user_id = zu["id"]
+                break
 
     return zoho_crm
 
 
 
 
-def count_test_accounts(zoho_crm):
+def count_accounts_with_criteria(zoho_crm):
     """ this shows how to search a moduule"""
     accounts = [account for page in
         zoho_crm.yield_page_from_module(module_name="Accounts", criteria='(Account_Name:equals:GrowthPath Pty Ltd)')
                 for account in page]
+
     return len(accounts)
 
 def test_use_in_criteria(zoho_crm):
@@ -67,7 +77,7 @@ def test_delete_accounts(zoho_crm):
         success,r = zoho_crm.delete_from_module(module_name='Accounts',record_id=account['id'])
         assert success,"Could not delete a record"
 
-    assert count_test_accounts(zoho_crm) == 0, "Could not delete all records"
+    assert count_accounts_with_criteria(zoho_crm) == 0, "Could not delete all records"
 
 
 
@@ -78,7 +88,7 @@ def test_delete_and_upsert_account(zoho_crm):
 
     # delete all existing records for GrowthPath Pty Ltd
     test_delete_accounts(zoho_crm)
-    assert count_test_accounts(zoho_crm) == 0, "Could not delete all records"
+    assert count_accounts_with_criteria(zoho_crm) == 0, "Could not delete all records"
 
     # now there should be none
 
@@ -91,13 +101,13 @@ def test_delete_and_upsert_account(zoho_crm):
     success,r = zoho_crm.upsert_zoho_module(module_name='Accounts',payload=payload,
                                             criteria='(Account_Name:equals:GrowthPath Pty Ltd)')
     success, r2 = zoho_crm.upsert_zoho_module(module_name='Accounts', criteria=None, payload=payload)
-    assert count_test_accounts(zoho_crm) == 2, "There should be two records now"
+    assert count_accounts_with_criteria(zoho_crm) == 2, "There should be two records now"
 
     success,r = zoho_crm.upsert_zoho_module(module_name='Accounts', criteria='(Account_Name:equals:GrowthPath Pty Ltd)'
                                             ,payload=payload)
-    assert count_test_accounts(zoho_crm) == 2, "There should still be two records now"
+    assert count_accounts_with_criteria(zoho_crm) == 2, "There should still be two records now"
     zoho_crm.delete_from_module(module_name="Accounts",record_id=r2['id'])
-    assert count_test_accounts(zoho_crm) == 1, "There should be one record now"
+    assert count_accounts_with_criteria(zoho_crm) == 1, "There should be one record now"
 
 
 def test_get_field_api_names(zoho_crm):
@@ -115,7 +125,7 @@ def test_add_and_search_contacts(zoho_crm):
 def test_get_contact_with_related_record(zoho_crm):
     # make sure we have an account
     test_delete_accounts(zoho_crm)
-    assert count_test_accounts(zoho_crm) == 0, "Could not delete all records"
+    assert count_accounts_with_criteria(zoho_crm) == 0, "Could not delete all records"
 
     zoho_account = {
         'Account_Name': 'GrowthPath Pty Ltd',

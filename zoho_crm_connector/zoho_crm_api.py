@@ -26,6 +26,7 @@ but you will still need to enumerate. This is too complicated to put in the API.
 
 import json
 import logging
+import time
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
@@ -135,7 +136,17 @@ class Zoho_crm:
         self.default_zoho_user_name = default_zoho_user_name
         self.default_zoho_user_id = default_zoho_user_id
         self.token_file_path = token_file_dir / token_file_name
-        self.current_token = self._load_access_token()
+        # self.current_token = self._load_access_token()
+        self.token_timestamp = time.time()  #this is a safe default
+        self.__token = self._load_access_token()
+
+
+    @property
+    def current_token(self):
+        if time.time() - self.token_timestamp > 50 * 60 or not self.__token:
+            self.__token = self._load_access_token()
+            self.token_timestamp = time.time()
+        return self.__token
 
     def _validate_response(self, r: requests.Response) -> Optional[dict]:
         """ Called internally to deal with Zoho API responses. Will fetch a new access token if necessary.
@@ -459,7 +470,7 @@ class Zoho_crm:
                 logger.error(f"Token is not valid")
                 raise RuntimeError(f"Zoho refresh token is not valid: {new_token}")
             else:
-                self.current_token = new_token
+                self.__token = new_token
                 with self.token_file_path.open('w') as outfile:
                     json.dump(new_token, outfile)
                 return new_token
