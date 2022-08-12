@@ -104,7 +104,7 @@ There is a little python script to help get teh refresh token from a self client
 Usage
 =====
 See test_zoho_crm_connector.py in tests for some examples.
-Note the when searching, parentheses must be escaped. See the code.
+Note when searching, parentheses must be escaped. See the code.
 
 
     @pytest.fixture(scope='session')
@@ -152,12 +152,15 @@ testing needs a connection to zoho. Set three environment variables, because thi
 
 Uploading
 =========
+```
 python3 setup.py sdist bdist_wheel
 python3 -m twine upload --skip-existing dist/*
-
+```
 
 Changes
 ========
+
+v 1.0.0 It works well enough to be v1
 
 v0.4.6. Add a message to Quota Exceeded exception
 
