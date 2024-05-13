@@ -232,9 +232,11 @@ class Zoho_crm:
     def get_users(self, user_type: str = None) -> dict:
         """
         Get zoho users, filtering by a Zoho CRM user type. The default value of None is mapped to 'AllUsers'
+        user_type is documented: https://www.zoho.com/crm/developer/docs/api/v6/get-users.html
+
         """
         if self.zoho_user_cache is None:
-            user_type = 'AllUsers' or user_type
+            user_type = user_type or 'AllUsers'
             url = self.base_url + f"users?type={user_type}"
             headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
             r = self.requests_session.get(url=url, headers=headers)
