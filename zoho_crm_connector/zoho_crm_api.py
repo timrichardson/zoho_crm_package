@@ -229,7 +229,7 @@ class Zoho_crm:
                 break
             page += 1
 
-    def get_users(self, user_type: str = None) -> dict:
+    def get_users(self, user_type: str = None, per_page:int=200) -> dict:
         """
         Get zoho users, filtering by a Zoho CRM user type. The default value of None is mapped to 'AllUsers'
         user_type is documented: https://www.zoho.com/crm/developer/docs/api/v6/get-users.html
@@ -237,10 +237,19 @@ class Zoho_crm:
         """
         if self.zoho_user_cache is None:
             user_type = user_type or 'AllUsers'
-            url = self.base_url + f"users?type={user_type}"
-            headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
-            r = self.requests_session.get(url=url, headers=headers)
-            self.zoho_user_cache = self._validate_response(r)
+            data = []
+            page = 0
+            while page < 999:
+                page += 1
+                url = self.base_url + f"users?type={user_type}&page={page}&per_page={per_page}"
+                headers = {'Authorization': 'Zoho-oauthtoken ' + self.current_token['access_token']}
+
+                r = self.requests_session.get(url=url, headers=headers)
+                validated_response = self._validate_response(r)
+                data.extend(validated_response['users'])
+                if not validated_response['info']['more_records']:
+                    break
+            self.zoho_user_cache = {"users": data}
         return self.zoho_user_cache
 
     def finduser_by_name(self, full_name: str) -> Tuple[str, str]:

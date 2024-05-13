@@ -38,7 +38,7 @@ def zoho_crm(tmp_path_factory)->Zoho_crm:
                             token_file_dir=tmp_path_factory.mktemp('zohocrm'))
 
     if not zoho_crm.default_zoho_user_id:
-        zoho_users = zoho_crm.get_users()
+        zoho_users = zoho_crm.get_users(per_page=1)
 
         assert zoho_users
         for zu in zoho_users['users']:
