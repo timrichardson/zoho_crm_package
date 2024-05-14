@@ -9,7 +9,7 @@ cmdclass = {'build_sphinx': BuildDoc}
 
 name = 'zoho_crm_connector'
 keywords = 'zoho crm'
-version = '1.0.1'
+version = '1.0.2'
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
@@ -26,10 +26,10 @@ setup(
     setup_requires=["pytest-runner", ],
     tests_require=["pytest", ],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.7',
-        'Topic :: Text Processing :: Linguistic',
+        'Programming Language :: Python :: 3.11',
+        'Topic :: Internet :: WWW/HTTP',
     ],
     url='https://github.com/timrichardson/zoho_crm_package',
     license='MIT',
