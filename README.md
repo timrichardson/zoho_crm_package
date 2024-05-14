@@ -159,6 +159,9 @@ python3 -m twine upload --skip-existing dist/*python3 -m twine upload --skip-exi
 
 Changes
 ========
+
+v1.0.3 added examples.py in case it is helpful
+
 v1.0.2 Metadata updates in the package, promote to Production/Stable
 
 v1.0.1 Fixed bug with get_users(): now all pages are returned, and the usertype filter works.
