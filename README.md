@@ -159,8 +159,9 @@ python3 -m twine upload --skip-existing dist/*
 
 Changes
 ========
+v1.0.1 Fixed bug with get_users(): now all pages are returned, and the usertype filter works.
 
-v 1.0.0 It works well enough to be v1
+v1.0.0 It works well enough to be v1
 
 v0.4.6. Add a message to Quota Exceeded exception
 
