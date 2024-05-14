@@ -9,7 +9,7 @@ cmdclass = {'build_sphinx': BuildDoc}
 
 name = 'zoho_crm_connector'
 keywords = 'zoho crm'
-version = '1.0.2'
+version = '1.0.3'
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
